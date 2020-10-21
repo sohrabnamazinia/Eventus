@@ -29,6 +29,12 @@ namespace ArsamBackend
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(o => o.AddPolicy(Constants.CORSPolicyName, builder =>
+            {
+                builder.AllowAnyOrigin()
+                       .AllowAnyMethod()
+                       .AllowAnyHeader();
+            }));
             services.AddControllers();
             services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
             services.AddDbContextPool<AppDbContext>(
@@ -47,6 +53,11 @@ namespace ArsamBackend
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            if (!env.IsProduction())
+            {
+                app.UseCors(Constants.CORSPolicyName);
+            }
 
             app.UseAuthentication();
 
