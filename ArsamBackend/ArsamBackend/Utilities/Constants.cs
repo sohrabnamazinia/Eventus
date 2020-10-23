@@ -12,5 +12,6 @@ namespace ArsamBackend.Utilities
         public const string ConnectionStringKey = "AppDbConnection";
         public const string MyAllowSpecificOrigins = "https://localhost:3000";
         public const string CORSPolicyName = "CORSPolicy";
+        public const string PasswordAllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
     }
 }
