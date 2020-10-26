@@ -14,6 +14,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ArsamBackend.Utilities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 namespace ArsamBackend
 {
@@ -30,12 +35,14 @@ namespace ArsamBackend
 
         public void ConfigureServices(IServiceCollection services)
         {
+            #region CORS
             services.AddCors(o => o.AddPolicy(Constants.CORSPolicyName, builder =>
             {
                 builder.AllowAnyOrigin()
                        .AllowAnyMethod()
                        .AllowAnyHeader();
             }));
+            #endregion CORS
             #region SetPasswordComplexity
             services.Configure<IdentityOptions>(options =>
             {
@@ -60,27 +67,52 @@ namespace ArsamBackend
 
             });
             #endregion SetPasswordComplexity
+            #region Auth Policies
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Constants.TokenSignKey));
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidateAudience = false,
+                    ValidateIssuer = false
+                };
+            });
+            
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy(JwtBearerDefaults.AuthenticationScheme, policy =>
+                {
+                    policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+                    policy.RequireAuthenticatedUser().Build();
+                });
+                options.DefaultPolicy = options.GetPolicy(JwtBearerDefaults.AuthenticationScheme);
+            }
+            );
+            #endregion Auth Policies
             services.AddControllers();
-            services.AddMvc(options => options.EnableEndpointRouting = false);
-            services.AddIdentity<IdentityUser, IdentityRole>(options => 
+            #region Db
+            services.AddIdentity<AppUser, IdentityRole>(options => 
             {
                 options.SignIn.RequireConfirmedEmail = true;
             }).AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders(); 
             services.AddDbContextPool<AppDbContext>(
             options => options.UseSqlServer(_config.GetConnectionString(Constants.ConnectionStringKey)));
+            #endregion Db
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            
+            #region Ordered Middlewares
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
-
             app.UseRouting();
+
+            app.UseHttpsRedirection();
 
             if (!env.IsProduction())
             {
@@ -95,6 +127,7 @@ namespace ArsamBackend
             {
                 endpoints.MapControllerRoute(Constants.RouteName, Constants.RoutePattern);
             });
+            #endregion Ordered Middleware
         }
     }
 }

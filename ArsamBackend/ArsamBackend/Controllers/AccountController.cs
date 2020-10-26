@@ -1,8 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
+using ArsamBackend.Models;
+using ArsamBackend.Security;
 using ArsamBackend.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,16 +15,15 @@ using Microsoft.Extensions.Logging;
 
 namespace ArsamBackend.Controllers
 {
-    // Todo : adjust some Status Codes
     [Route("api/[controller]/[action]")]
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> userManager;
-        private readonly SignInManager<IdentityUser> signInManager;
+        private readonly UserManager<AppUser> userManager;
+        private readonly SignInManager<AppUser> signInManager;
         private readonly ILogger<AccountController> _logger;
 
-        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ILogger<AccountController> logger)
+        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
@@ -27,11 +31,12 @@ namespace ArsamBackend.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<IdentityUser>> Register(RegisterViewModel model)
+        [AllowAnonymous]
+        public async Task<ActionResult<AppUser>> Register(RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var user = new IdentityUser
+                var user = new AppUser
                 {
                     UserName = model.EmailAddress,
                     Email = model.EmailAddress
@@ -57,6 +62,7 @@ namespace ArsamBackend.Controllers
 
         
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> ConfirmEmail(string id, string token)
         {
             if (id == null)
@@ -76,22 +82,39 @@ namespace ArsamBackend.Controllers
 
             if (result.Succeeded)
             {
-                return StatusCode(307);
+                return Ok(user.Email);
             }
             return BadRequest();
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+                var user = await userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    return NotFound("User not found!");
+                }
+
+                var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, true);
+
+                if (result.IsNotAllowed)
+                {
+                    ModelState.AddModelError("Error", "Email has not been confirmed yet!");
+                    return Unauthorized(ModelState);
+                }
+
+                var Token = JWTokenHandler.GenerateToken(user);
+
                 if (result.Succeeded)
                 {
-                    return Ok();
+                    return Ok(new { Token });
                 }
-                ModelState.AddModelError(string.Empty, "Invalid login attempt!");
+                
+                ModelState.AddModelError("Error", "Invalid login attempt!");
             }
             return BadRequest(ModelState);
         }
