@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ArsamBackend.Controllers
 {
-    [Route("api/[controller][action]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
     public class EventController : ControllerBase
     {
@@ -24,13 +24,13 @@ namespace ArsamBackend.Controllers
             this._context = context;
         }
         [HttpPost]
-        public int Create(EventViewModel IncomeEvent)
+        public int Create(EventViewModel incomeEvent)
         {
             Event eva = new Event()
             {
-                Name = IncomeEvent.Name,
-                IsPrivate = IncomeEvent.IsPrivate,
-                Location = IncomeEvent.Location
+                Name = incomeEvent.Name,
+                IsPrivate = incomeEvent.IsPrivate,
+                Location = incomeEvent.Location
             };
             _context.Events.Add(eva);
             _context.SaveChanges();
