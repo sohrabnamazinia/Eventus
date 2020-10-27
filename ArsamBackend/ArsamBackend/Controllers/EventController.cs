@@ -36,5 +36,35 @@ namespace ArsamBackend.Controllers
             _context.SaveChanges();
             return eva.Id;
         }
+
+        [HttpGet]
+        public Event Get(int id)
+        {
+           return _context.Events.SingleOrDefault(x => x.Id == id);
+        }
+
+        [HttpPost]
+        public bool Update(int id, EventViewModel incomeEvent)
+        {
+            Event existEvent = _context.Events.SingleOrDefault(x => x.Id == id);
+            if (existEvent == null)
+                return false;
+            existEvent.Location = incomeEvent.Location;
+            existEvent.IsPrivate = incomeEvent.IsPrivate;
+            existEvent.Name = incomeEvent.Name;
+            _context.SaveChanges();
+            return true;
+        }
+
+        [HttpGet]
+        public bool Delete(int id)
+        {
+            Event existEvent = _context.Events.SingleOrDefault(x => x.Id == id);
+            if (existEvent == null)
+                return false;
+            _context.Events.Remove(existEvent);
+            _context.SaveChanges();
+            return true;
+        }
     }
 }
