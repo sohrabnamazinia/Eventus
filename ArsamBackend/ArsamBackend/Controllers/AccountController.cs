@@ -50,7 +50,7 @@ namespace ArsamBackend.Controllers
                     var ConfirmationLink = Url.Action("ConfirmEmail", "Account", new { id = user.Id, token = Token }, Request.Scheme);
                     // TODO : Send email 
                     _logger.Log(LogLevel.Warning, ConfirmationLink);
-                    return CreatedAtAction(nameof(Register), new { email = user.Email, token = Token, id = user.Id });
+                    return CreatedAtAction(nameof(Register), new { email = user.Email, token = Token });
                 }
                 foreach (var error in result.Errors)
                 {
