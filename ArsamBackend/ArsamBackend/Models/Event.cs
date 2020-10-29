@@ -21,5 +21,10 @@ namespace ArsamBackend.Models
 
         public bool IsPrivate { get; set; }
 
+        public AppUser CreatorAppUser { get; set; }
+
+        public bool IsDeleted { get; set; }
+
+
     }
 }
