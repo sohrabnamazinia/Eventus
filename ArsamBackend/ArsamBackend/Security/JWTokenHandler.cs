@@ -2,11 +2,17 @@
 using ArsamBackend.Utilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
+using NLog.Fluent;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,7 +35,7 @@ namespace ArsamBackend.Security
             var TokenDescriptor = new SecurityTokenDescriptor()
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddDays(7),
+                Expires = DateTime.Now.AddDays(1),
                 SigningCredentials = Creds
             };
 
@@ -39,6 +45,16 @@ namespace ArsamBackend.Security
         }
 
         #region utilities
+
+        public static string GetRawJTW(string jwt)
+        {
+            var token = string.Empty;
+            if (AuthenticationHeaderValue.TryParse(jwt, out var headerValue))
+            {
+                token = headerValue.Parameter;
+            }
+            return token;
+        }
         public static bool ValidateToken(string token)
         {
             var TokenSignKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Constants.TokenSignKey));
@@ -71,4 +87,5 @@ namespace ArsamBackend.Security
         #endregion utilities
 
     }
+
 }

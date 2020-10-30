@@ -14,6 +14,9 @@ namespace ArsamBackend.Utilities
         public const string MyAllowSpecificOrigins = "https://localhost:3000";
         public const string CORSPolicyName = "CORSPolicy";
         public const string PasswordAllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-        public const string TokenSignKey = "423454vfpivjfqa^ff%ds";
+        public const string TokenSignKey = "423454vfpivjfqa^ff%ds^ff%454vfpivjfqa";
+        public const string EmailConfirmationError = "Email has not been confirmed yet!";
+        public const string InvalidLoginError = "Invalid login attempt!";
+        public const string NotFoundError = "User not found!";
     }
 }

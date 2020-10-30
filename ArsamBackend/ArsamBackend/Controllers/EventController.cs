@@ -14,8 +14,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace ArsamBackend.Controllers
 {
     [Route("api/[controller]/[action]")]
@@ -152,7 +150,6 @@ namespace ArsamBackend.Controllers
             return Ok(events);
 
         }
-
 
         //methods
         private async Task<AppUser> FindUserByTokenAsync(string authorization)
