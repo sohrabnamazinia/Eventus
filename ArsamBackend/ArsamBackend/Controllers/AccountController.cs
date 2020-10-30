@@ -14,6 +14,7 @@ using ArsamBackend.ViewModels;
 using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2.Requests;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Identity;
@@ -34,12 +35,14 @@ namespace ArsamBackend.Controllers
         private readonly SignInManager<AppUser> signInManager;
         private readonly ILogger<AccountController> _logger;
         public readonly JwtSecurityTokenHandler handler;
+        private readonly IDataProtector protector;
 
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger)
+        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
             this._logger = logger;
+            this.protector = dataProtectionProvider.CreateProtector(DataProtectionPurposeStrings.UserIdQueryString);
         }
 
         [HttpPost]
@@ -58,7 +61,8 @@ namespace ArsamBackend.Controllers
                 if (result.Succeeded)
                 {
                     var Token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-                    var ConfirmationLink = Url.Action(nameof(ConfirmEmail), nameof(AccountController), new { id = user.Id, token = Token }, Request.Scheme);
+                    var EncryptedId = protector.Protect(user.Id);
+                    var ConfirmationLink = Url.Action(nameof(ConfirmEmail), "Account", new { id = EncryptedId, token = Token }, Request.Scheme);
                     // TODO : Send email 
                     _logger.Log(LogLevel.Warning, ConfirmationLink);
                     return CreatedAtAction(nameof(Register), new { email = user.Email, token = Token });
@@ -83,6 +87,7 @@ namespace ArsamBackend.Controllers
             {
                 return BadRequest("Email confirmation Token is invalid!");
             }
+            id = protector.Unprotect(id);
             var user = await userManager.FindByIdAsync(id);
             if (user == null)
             {
@@ -115,6 +120,12 @@ namespace ArsamBackend.Controllers
                     ModelState.AddModelError("Error", Constants.EmailConfirmationError);
                     return Unauthorized(ModelState);
                 }
+
+                if (result.IsLockedOut)
+                {
+                    return StatusCode(423, "Too many Failed attempts! please try later.");
+                }
+
 
                 var Token = JWTokenHandler.GenerateToken(user);
 
@@ -151,7 +162,8 @@ namespace ArsamBackend.Controllers
                     if (result.Succeeded)
                     {
                         var Token = await userManager.GenerateEmailConfirmationTokenAsync(NewUser);
-                        var ConfirmationLink = Url.Action(nameof(ConfirmEmail), nameof(AccountController), new { id = NewUser.Id, token = Token }, Request.Scheme);
+                        var EncryptedId = protector.Protect(NewUser.Id);
+                        var ConfirmationLink = Url.Action(nameof(ConfirmEmail), "Account", new { id = EncryptedId, token = Token }, Request.Scheme);
                         // TODO : Send email 
                         _logger.Log(LogLevel.Warning, ConfirmationLink);
                         return CreatedAtAction(nameof(Register), new { email = Email, token = Token });
@@ -190,6 +202,7 @@ namespace ArsamBackend.Controllers
             await signInManager.SignOutAsync();
             return Ok();
         }
+
 
     }
     

@@ -98,9 +98,12 @@ namespace ArsamBackend
             services.AddIdentity<AppUser, IdentityRole>(options => 
             {
                 options.SignIn.RequireConfirmedEmail = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             }).AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders(); 
             services.AddDbContextPool<AppDbContext>(
             options => options.UseSqlServer(_config.GetConnectionString(Constants.ConnectionStringKey)));
+            services.AddSingleton<DataProtectionPurposeStrings>();
             #endregion Db
         }
 

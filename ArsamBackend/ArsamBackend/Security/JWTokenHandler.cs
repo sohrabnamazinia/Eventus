@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 
 namespace ArsamBackend.Security
 {
+    // TODO : it's better to do service based approach and convert it to Interface.
     public static class JWTokenHandler
     {
         public static string GenerateToken(AppUser user)
