@@ -26,7 +26,6 @@ namespace ArsamBackend
     {
         private readonly IWebHostEnvironment env;
         private IConfiguration _config { get; }
-
         public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             _config = configuration;
@@ -59,6 +58,7 @@ namespace ArsamBackend
                 }
                 else
                 {
+                    options.SignIn.RequireConfirmedEmail = true;
                     options.Password.RequiredLength = 10;
                     options.Password.RequiredUniqueChars = 3;
                     options.Lockout.MaxFailedAccessAttempts = 5;
@@ -79,7 +79,9 @@ namespace ArsamBackend
                     ValidateIssuer = false
                 };
             });
+
             
+
             services.AddAuthorization(options =>
             {
                 options.AddPolicy(JwtBearerDefaults.AuthenticationScheme, policy =>
@@ -96,9 +98,12 @@ namespace ArsamBackend
             services.AddIdentity<AppUser, IdentityRole>(options => 
             {
                 options.SignIn.RequireConfirmedEmail = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             }).AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders(); 
             services.AddDbContextPool<AppDbContext>(
             options => options.UseSqlServer(_config.GetConnectionString(Constants.ConnectionStringKey)));
+            services.AddSingleton<DataProtectionPurposeStrings>();
             #endregion Db
         }
 

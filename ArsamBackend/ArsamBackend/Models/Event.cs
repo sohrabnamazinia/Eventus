@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace ArsamBackend.Models
 {
-
     public class Event
     {
         [Key]
@@ -24,7 +23,6 @@ namespace ArsamBackend.Models
         public AppUser CreatorAppUser { get; set; }
 
         public bool IsDeleted { get; set; }
-
 
     }
 }
