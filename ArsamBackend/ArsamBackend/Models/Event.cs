@@ -22,6 +22,8 @@ namespace ArsamBackend.Models
 
         public AppUser CreatorAppUser { get; set; }
 
+        public string CreatorEmail { get; set; }
+
         public bool IsDeleted { get; set; }
 
     }

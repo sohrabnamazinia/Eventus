@@ -14,7 +14,7 @@ namespace ArsamBackend.ViewModels
         public string Name { get; set; }
         public int id { get; set; }
         public string Location { get; set; }
-
+        public string CreatorEmail { get; set; }
         public bool IsPrivate { get; set; }
 
     }

@@ -41,11 +41,13 @@ namespace ArsamBackend.Controllers
                 IsPrivate = incomeEvent.IsPrivate,
                 Location = incomeEvent.Location,
                 CreatorAppUser = requestedUser,
+                CreatorEmail = requestedUser.Email,
                 IsDeleted = false
             };
             await _context.Events.AddAsync(eva);
             await _context.SaveChangesAsync();
             incomeEvent.id = eva.Id;
+            incomeEvent.CreatorEmail = requestedUser.Email;
             return Ok(incomeEvent);
         }
 
@@ -68,7 +70,8 @@ namespace ArsamBackend.Controllers
                     Name = resultEvent.Name,
                     id = id,
                     IsPrivate = resultEvent.IsPrivate,
-                    Location = resultEvent.Location
+                    Location = resultEvent.Location,
+                    CreatorEmail = resultEvent.CreatorEmail
                 });
                 return result;
             }
@@ -76,8 +79,10 @@ namespace ArsamBackend.Controllers
             {
                 var result = new ActionResult<EventViewModel>(new EventViewModel()
                 {
+                    id = resultEvent.Id,
                     Name = resultEvent.Name,
-                    Location = resultEvent.Location
+                    Location = resultEvent.Location,
+                    IsPrivate = resultEvent.IsPrivate
                 });
                 return result;
             }
@@ -109,7 +114,8 @@ namespace ArsamBackend.Controllers
                 Name = existEvent.Name,
                 id = existEvent.Id,
                 IsPrivate = existEvent.IsPrivate,
-                Location = existEvent.Location
+                Location = existEvent.Location,
+                CreatorEmail = existEvent.CreatorEmail
             };
 
             return Ok(result);
@@ -147,11 +153,24 @@ namespace ArsamBackend.Controllers
             var events = await _context.Events.Where(x => !x.IsDeleted).ToListAsync();
             if (events == null)
                 return NotFound("no event found");
-            return Ok(events);
+            var result = new List<EventViewModel>();
+            foreach (var ev in events)
+            {
+                result.Add(new EventViewModel()
+                {
+                    Name = ev.Name,
+                    Location = ev.Location,
+                    CreatorEmail = ev.CreatorEmail,
+                    id = ev.Id,
+                    IsPrivate = ev.IsPrivate
+                });
+            }
+            return Ok(result);
 
         }
 
         //methods
+        [NonAction]
         private async Task<AppUser> FindUserByTokenAsync(string authorization)
         {
             string token = string.Empty;
