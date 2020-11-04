@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using ArsamBackend.Models;
 using ArsamBackend.Security;
+using ArsamBackend.Services;
 using ArsamBackend.Utilities;
 using ArsamBackend.ViewModels;
 using Google.Apis.Auth;
@@ -36,13 +37,15 @@ namespace ArsamBackend.Controllers
         private readonly ILogger<AccountController> _logger;
         public readonly JwtSecurityTokenHandler handler;
         private readonly IDataProtector protector;
+        private readonly IJWTHandler _jWTHandler;
 
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings)
+        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTHandler jWTHandler)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
             this._logger = logger;
             this.protector = dataProtectionProvider.CreateProtector(DataProtectionPurposeStrings.UserIdQueryString);
+            this._jWTHandler = jWTHandler;
         }
 
         [HttpPost]
@@ -127,7 +130,7 @@ namespace ArsamBackend.Controllers
                 }
 
 
-                var Token = JWTokenHandler.GenerateToken(user);
+                var Token = _jWTHandler.GenerateToken(user);
 
                 if (result.Succeeded)
                 {
@@ -179,7 +182,7 @@ namespace ArsamBackend.Controllers
                     if (user.EmailConfirmed)
                     {
                         await signInManager.SignInAsync(user, isPersistent: false);
-                        var Token = JWTokenHandler.GenerateToken(user);
+                        var Token = _jWTHandler.GenerateToken(user);
                         return Ok(new { Token });
                     }
 

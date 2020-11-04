@@ -19,6 +19,8 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using ArsamBackend.Services;
+using ArsamBackend.Security;
 
 namespace ArsamBackend
 {
@@ -68,7 +70,7 @@ namespace ArsamBackend
             });
             #endregion SetPasswordComplexity
             #region Auth Policies
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Constants.TokenSignKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.GetValue<string>("TokenSignKey")));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters()
@@ -79,8 +81,6 @@ namespace ArsamBackend
                     ValidateIssuer = false
                 };
             });
-
-            
 
             services.AddAuthorization(options =>
             {
@@ -94,6 +94,7 @@ namespace ArsamBackend
             );
             #endregion Auth Policies
             services.AddControllers();
+            services.AddScoped<IJWTHandler, JWTokenHandler>();
             #region Db
             services.AddIdentity<AppUser, IdentityRole>(options => 
             {
