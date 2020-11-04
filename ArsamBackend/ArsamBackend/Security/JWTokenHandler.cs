@@ -1,4 +1,5 @@
 ﻿using ArsamBackend.Models;
+using ArsamBackend.Services;
 using ArsamBackend.Utilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -19,12 +20,19 @@ using System.Threading.Tasks;
 
 namespace ArsamBackend.Security
 {
-    // TODO : it's better to do service based approach and convert it to Interface.
-    public static class JWTokenHandler
+    public class JWTokenHandler : IJWTHandler
     {
-        public static string GenerateToken(AppUser user)
+
+        private readonly IConfiguration _config;
+
+        public JWTokenHandler(IConfiguration config)
         {
-            var TokenSignKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Constants.TokenSignKey));
+            this._config = config;
+        }
+
+        public string GenerateToken(AppUser user)
+        {
+            var TokenSignKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.GetValue<string>("TokenSignKey")));
             var Creds = new SigningCredentials(TokenSignKey, SecurityAlgorithms.HmacSha512Signature);
 
             var claims = new List<Claim>()
@@ -56,9 +64,9 @@ namespace ArsamBackend.Security
             }
             return token;
         }
-        public static bool ValidateToken(string token)
+        public bool ValidateToken(string token)
         {
-            var TokenSignKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Constants.TokenSignKey));
+            var TokenSignKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.GetValue<string>("TokenSignKey")));
             var TokenHandler = new JwtSecurityTokenHandler();
             try
             {
@@ -84,7 +92,6 @@ namespace ArsamBackend.Security
             var stringClaimValue = securityToken.Claims.First(claim => claim.Type == claimType).Value;
             return stringClaimValue;
         }
-
         #endregion utilities
 
     }
