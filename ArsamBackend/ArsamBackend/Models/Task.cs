@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ArsamBackend.Models
 {
-    public class Event
+    public class Task
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -16,18 +16,16 @@ namespace ArsamBackend.Models
         [Required]
         public string Name { get; set; }
 
-        public string Location { get; set; }
+        public string Description { get; set; }
 
-        public bool IsPrivate { get; set; }
+        [Required]
+        public string Status { get; set; } 
+        
+        public int Order { get; set; } 
 
-        public AppUser CreatorAppUser { get; set; }
-
-        public string CreatorEmail { get; set; }
-
-        public bool IsDeleted { get; set; }
-
-        //start date 
-        //end date 
-        //image file 
+        [Required]
+        public int EventId { get; set; }
+       
+        public List<string> AssignedMembers { get; set; }
     }
 }

@@ -9,10 +9,12 @@ using ArsamBackend.Models;
 using ArsamBackend.Security;
 using ArsamBackend.ViewModels;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using Task = System.Threading.Tasks.Task;
 
 namespace ArsamBackend.Controllers
 {
@@ -28,6 +30,8 @@ namespace ArsamBackend.Controllers
             _logger = logger;
             this._context = context;
         }
+
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult> Create(EventViewModel incomeEvent)
         {
@@ -51,6 +55,7 @@ namespace ArsamBackend.Controllers
             return Ok(incomeEvent);
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<EventViewModel>> Get(int id)
         {
@@ -62,7 +67,7 @@ namespace ArsamBackend.Controllers
             if (resultEvent == null || resultEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
 
-            
+
             if (resultEvent.CreatorAppUser == requestedUser) //creator
             {
                 var result = new ActionResult<EventViewModel>(new EventViewModel()
@@ -86,15 +91,15 @@ namespace ArsamBackend.Controllers
                 });
                 return result;
             }
-
         }
 
+        [Authorize]
         [HttpPut]
         public async Task<ActionResult<EventViewModel>> Update(int id, EventViewModel incomeEvent)
         {
             AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
             if (requestedUser == null)
-                return StatusCode(401,"user not founded");
+                return StatusCode(401, "user not founded");
 
             Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
 
@@ -121,13 +126,13 @@ namespace ArsamBackend.Controllers
             return Ok(result);
         }
 
+        [Authorize]
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
             AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
             if (requestedUser == null)
                 return StatusCode(401, "user not founded");
-
 
             Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
 
@@ -137,12 +142,12 @@ namespace ArsamBackend.Controllers
             if (existEvent.CreatorAppUser != requestedUser)
                 return StatusCode(403, "access denied");
 
-
             existEvent.IsDeleted = true;
             await _context.SaveChangesAsync();
             return Ok("event deleted");
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<List<EventViewModel>>> GetAll()
         {
@@ -167,6 +172,29 @@ namespace ArsamBackend.Controllers
             }
             return Ok(result);
 
+        }
+
+        [Authorize]
+        [HttpGet]
+        public async Task<ActionResult<List<OutputTaskViewModel>>> GetTasks(int id)
+        {
+            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
+            if (requestedUser == null)
+                return StatusCode(401, "user not founded");
+
+            var taskEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
+            if (taskEvent == null || taskEvent.IsDeleted)
+                return NotFound("no event found by this id: " + id);
+
+            var tasks = _context.Tasks.Where(x => x.EventId == id).ToList();
+            if (tasks.Count == 0)
+                return NotFound("there is no task for this event");
+            
+            var result = new List<OutputTaskViewModel>();
+            foreach (var task in tasks)
+                result.Add(new OutputTaskViewModel(task.Id, task.Name,task.Description,task.Status,task.Order,task.EventId, task.AssignedMembers));
+            
+            return result;
         }
 
         //methods

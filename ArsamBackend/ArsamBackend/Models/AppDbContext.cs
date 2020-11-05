@@ -15,10 +15,16 @@ namespace ArsamBackend.Models
         }
 
         public DbSet<Event> Events { get; set; }
+        public DbSet<Task> Tasks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            builder.Entity<Task>()
+                .Property(e => e.AssignedMembers)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
         }
     }
 }
