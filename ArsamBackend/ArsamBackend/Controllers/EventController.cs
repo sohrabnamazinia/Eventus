@@ -92,7 +92,8 @@ namespace ArsamBackend.Controllers
                     eve.ImagesFilePath = imagesList;
                     await _context.SaveChangesAsync();
                 }
-                return BadRequest("image not found");
+                else
+                    return BadRequest("image not found");
             }
             return Ok("images added");
 
