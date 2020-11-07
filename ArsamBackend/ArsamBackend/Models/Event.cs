@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
+using ArsamBackend.ViewModels;
 
 namespace ArsamBackend.Models
 {
@@ -16,15 +17,33 @@ namespace ArsamBackend.Models
         [Required]
         public string Name { get; set; }
 
+        [Required]
+        public bool IsProject { get; set; }//type of event ->project event & normal event
+
+        public string Description { get; set; }
+
         public string Location { get; set; }
 
         public bool IsPrivate { get; set; }
 
-        public AppUser CreatorAppUser { get; set; }
-
         public string CreatorEmail { get; set; }
 
         public bool IsDeleted { get; set; }
+
+        [Required]
+        public DateTime StartDate { get; set; }
+
+        [Required]
+        public DateTime EndDate { get; set; }
+
+        public List<string> ImagesFilePath { get; set; }
+
+        [Required]
+        public bool IsLimitedMember { get; set; }
+
+        public int MaximumNumberOfMembers { get; set; }
+
+        public List<string> EventMembersEmail { get; set; }
 
     }
 }

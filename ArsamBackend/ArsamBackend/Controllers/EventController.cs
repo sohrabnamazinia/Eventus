@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
@@ -9,10 +10,12 @@ using ArsamBackend.Models;
 using ArsamBackend.Security;
 using ArsamBackend.ViewModels;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using Task = System.Threading.Tasks.Task;
 
 namespace ArsamBackend.Controllers
 {
@@ -28,145 +31,214 @@ namespace ArsamBackend.Controllers
             _logger = logger;
             this._context = context;
         }
-        [HttpPost]
-        public async Task<ActionResult> Create(EventViewModel incomeEvent)
-        {
-            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
-            if (requestedUser == null)
-                return StatusCode(401, "you have to login first");
 
-            Event eva = new Event()
+        [Authorize]
+        [HttpPost]
+        public async Task<ActionResult> Create(InputEventViewModel incomeEvent)
+        {
+            var requestedUserEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+
+            Event newEvent = new Event()
             {
                 Name = incomeEvent.Name,
+                IsProject = incomeEvent.IsProject,
+                Description = incomeEvent.Description,
                 IsPrivate = incomeEvent.IsPrivate,
-                Location = incomeEvent.Location,
-                CreatorAppUser = requestedUser,
-                CreatorEmail = requestedUser.Email,
-                IsDeleted = false
+                Location = "",
+                StartDate = incomeEvent.StartDate,
+                EndDate = incomeEvent.EndDate,
+                IsLimitedMember = incomeEvent.IsLimitedMember,
+                MaximumNumberOfMembers = incomeEvent.MaximumNumberOfMembers,
+                EventMembersEmail = new List<string>(),
+                CreatorEmail = requestedUserEmail,
+                IsDeleted = false,
+                ImagesFilePath = new List<string>()
             };
-            await _context.Events.AddAsync(eva);
+
+            await _context.Events.AddAsync(newEvent);
             await _context.SaveChangesAsync();
-            incomeEvent.id = eva.Id;
-            incomeEvent.CreatorEmail = requestedUser.Email;
-            return Ok(incomeEvent);
+
+            var result = new OutputEventViewModel(newEvent);
+            return Ok(result);
         }
 
-        [HttpGet]
-        public async Task<ActionResult<EventViewModel>> Get(int id)
+        [Authorize]
+        [HttpPost]
+        public async Task<ActionResult> AddImage(int eventId)
         {
-            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
-            if (requestedUser == null)
-                return StatusCode(401, "user not founded");
+            var requestedUserEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+            Event eve = await _context.Events.FindAsync(eventId);
 
-            var resultEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
-            if (resultEvent == null || resultEvent.IsDeleted)
-                return NotFound("no event found by this id: " + id);
-
+            if (requestedUserEmail != eve.CreatorEmail)
+                return StatusCode(403, "access denied");
             
-            if (resultEvent.CreatorAppUser == requestedUser) //creator
+            var req = Request.Form.Files;
+
+            string path = ("Images/Events/");
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            foreach (var file in req)
             {
-                var result = new ActionResult<EventViewModel>(new EventViewModel()
+                if (file != null && file.Length > 0)
                 {
-                    Name = resultEvent.Name,
-                    id = id,
-                    IsPrivate = resultEvent.IsPrivate,
-                    Location = resultEvent.Location,
-                    CreatorEmail = resultEvent.CreatorEmail
-                });
-                return result;
+                    var fileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(file.FileName);
+                    await using (var fileStream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
+                    {
+                        await file.CopyToAsync(fileStream);
+                    }
+                    var imagesList = eve.ImagesFilePath.ToList();
+                    imagesList.Add(Path.Combine(path, fileName));
+                    eve.ImagesFilePath = imagesList;
+                    await _context.SaveChangesAsync();
+                }
+                else
+                    return BadRequest("image not found");
             }
-            else // everyone
-            {
-                var result = new ActionResult<EventViewModel>(new EventViewModel()
-                {
-                    id = resultEvent.Id,
-                    Name = resultEvent.Name,
-                    Location = resultEvent.Location,
-                    IsPrivate = resultEvent.IsPrivate
-                });
-                return result;
-            }
+            return Ok("images added");
 
         }
 
-        [HttpPut]
-        public async Task<ActionResult<EventViewModel>> Update(int id, EventViewModel incomeEvent)
-        {
-            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
-            if (requestedUser == null)
-                return StatusCode(401,"user not founded");
+        //[Authorize]
+        //[HttpGet]
+        //public async Task<ActionResult<InputEventViewModel>> Get(int id)
+        //{
+        //    AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
+        //    if (requestedUser == null)
+        //        return StatusCode(401, "user not founded");
 
-            Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
-
-            if (existEvent == null || existEvent.IsDeleted)
-                return NotFound("no event found by this id: " + id);
-
-            if (existEvent.CreatorAppUser != requestedUser)
-                return StatusCode(403, "access denied");
-
-            existEvent.Location = incomeEvent.Location;
-            existEvent.IsPrivate = incomeEvent.IsPrivate;
-            existEvent.Name = incomeEvent.Name;
-            await _context.SaveChangesAsync();
-
-            var result = new EventViewModel()
-            {
-                Name = existEvent.Name,
-                id = existEvent.Id,
-                IsPrivate = existEvent.IsPrivate,
-                Location = existEvent.Location,
-                CreatorEmail = existEvent.CreatorEmail
-            };
-
-            return Ok(result);
-        }
-
-        [HttpDelete]
-        public async Task<ActionResult> Delete(int id)
-        {
-            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
-            if (requestedUser == null)
-                return StatusCode(401, "user not founded");
+        //    var resultEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
+        //    if (resultEvent == null || resultEvent.IsDeleted)
+        //        return NotFound("no event found by this id: " + id);
 
 
-            Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
+        //    if (resultEvent.CreatorEmail == requestedUser.Email) //creator
+        //    {
+        //        var result = new ActionResult<InputEventViewModel>(new InputEventViewModel()
+        //        {
+        //            Name = resultEvent.Name,
+        //            id = id,
+        //            IsPrivate = resultEvent.IsPrivate,
+        //            Location = resultEvent.Location,
+        //            CreatorEmail = resultEvent.CreatorEmail
+        //        });
+        //        return result;
+        //    }
+        //    else // everyone
+        //    {
+        //        var result = new ActionResult<InputEventViewModel>(new InputEventViewModel()
+        //        {
+        //            id = resultEvent.Id,
+        //            Name = resultEvent.Name,
+        //            Location = resultEvent.Location,
+        //            IsPrivate = resultEvent.IsPrivate
+        //        });
+        //        return result;
+        //    }
+        //}
 
-            if (existEvent == null || existEvent.IsDeleted)
-                return NotFound("no event found by this id: " + id);
+        //[Authorize]
+        //[HttpPut]
+        //public async Task<ActionResult<InputEventViewModel>> Update(int id, InputEventViewModel incomeInputEvent)
+        //{
+        //    AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
+        //    if (requestedUser == null)
+        //        return StatusCode(401, "user not founded");
 
-            if (existEvent.CreatorAppUser != requestedUser)
-                return StatusCode(403, "access denied");
+        //    Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
 
+        //    if (existEvent == null || existEvent.IsDeleted)
+        //        return NotFound("no event found by this id: " + id);
 
-            existEvent.IsDeleted = true;
-            await _context.SaveChangesAsync();
-            return Ok("event deleted");
-        }
+        //    if (existEvent.CreatorEmail != requestedUser.Email)
+        //        return StatusCode(403, "access denied");
 
+        //    existEvent.Location = incomeInputEvent.Location;
+        //    existEvent.IsPrivate = incomeInputEvent.IsPrivate;
+        //    existEvent.Name = incomeInputEvent.Name;
+        //    await _context.SaveChangesAsync();
+
+        //    var result = new InputEventViewModel()
+        //    {
+        //        Name = existEvent.Name,
+        //        id = existEvent.Id,
+        //        IsPrivate = existEvent.IsPrivate,
+        //        Location = existEvent.Location,
+        //        CreatorEmail = existEvent.CreatorEmail
+        //    };
+
+        //    return Ok(result);
+        //}
+
+        //[Authorize]
+        //[HttpDelete]
+        //public async Task<ActionResult> Delete(int id)
+        //{
+        //    AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
+        //    if (requestedUser == null)
+        //        return StatusCode(401, "user not founded");
+
+        //    Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
+
+        //    if (existEvent == null || existEvent.IsDeleted)
+        //        return NotFound("no event found by this id: " + id);
+
+        //    if (existEvent.CreatorEmail != requestedUser.Email)
+        //        return StatusCode(403, "access denied");
+
+        //    existEvent.IsDeleted = true;
+        //    await _context.SaveChangesAsync();
+        //    return Ok("event deleted");
+        //}
+
+        //[Authorize]
+        //[HttpGet]
+        //public async Task<ActionResult<List<InputEventViewModel>>> GetAll()
+        //{
+        //    AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
+        //    if (requestedUser == null)
+        //        return StatusCode(401, "user not founded");
+
+        //    var events = await _context.Events.Where(x => !x.IsDeleted).ToListAsync();
+        //    if (events == null)
+        //        return NotFound("no event found");
+        //    var result = new List<InputEventViewModel>();
+        //    foreach (var ev in events)
+        //    {
+        //        result.Add(new InputEventViewModel()
+        //        {
+        //            Name = ev.Name,
+        //            Location = ev.Location,
+        //            CreatorEmail = ev.CreatorEmail,
+        //            id = ev.Id,
+        //            IsPrivate = ev.IsPrivate
+        //        });
+        //    }
+        //    return Ok(result);
+
+        //}
+
+        [Authorize]
         [HttpGet]
-        public async Task<ActionResult<List<EventViewModel>>> GetAll()
+        public async Task<ActionResult<List<OutputTaskViewModel>>> GetTasks(int id)
         {
             AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
             if (requestedUser == null)
                 return StatusCode(401, "user not founded");
 
-            var events = await _context.Events.Where(x => !x.IsDeleted).ToListAsync();
-            if (events == null)
-                return NotFound("no event found");
-            var result = new List<EventViewModel>();
-            foreach (var ev in events)
-            {
-                result.Add(new EventViewModel()
-                {
-                    Name = ev.Name,
-                    Location = ev.Location,
-                    CreatorEmail = ev.CreatorEmail,
-                    id = ev.Id,
-                    IsPrivate = ev.IsPrivate
-                });
-            }
-            return Ok(result);
+            var taskEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
+            if (taskEvent == null || taskEvent.IsDeleted)
+                return NotFound("no event found by this id: " + id);
 
+            var tasks = _context.Tasks.Where(x => x.EventId == id).ToList();
+            if (tasks.Count == 0)
+                return NotFound("there is no task for this event");
+
+            var result = new List<OutputTaskViewModel>();
+            foreach (var task in tasks)
+                result.Add(new OutputTaskViewModel(task.Id, task.Name, task.Status, task.Order, task.EventId, task.AssignedMembers));
+
+            return result;
         }
 
         //methods

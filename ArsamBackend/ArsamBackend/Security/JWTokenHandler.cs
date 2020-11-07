@@ -53,6 +53,17 @@ namespace ArsamBackend.Security
             return TokenHandler.WriteToken(Token);
         }
 
+        public static string FindEmailByToken(string authorization)
+        {
+            string token = string.Empty;
+            if (AuthenticationHeaderValue.TryParse(authorization, out var headerValue))
+            {
+                token = headerValue.Parameter;
+            }
+            var userEmail = GetClaim(token, "nameid");
+            return userEmail;
+        }
+
         #region utilities
 
         public static string GetRawJTW(string jwt)
