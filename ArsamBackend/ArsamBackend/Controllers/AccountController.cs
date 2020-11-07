@@ -67,6 +67,7 @@ namespace ArsamBackend.Controllers
                     var EncryptedId = protector.Protect(user.Id);
                     var ConfirmationLink = Url.Action(nameof(ConfirmEmail), "Account", new { id = EncryptedId, token = Token }, Request.Scheme);
                     // TODO : Send email 
+
                     _logger.Log(LogLevel.Warning, ConfirmationLink);
                     return CreatedAtAction(nameof(Register), new { email = user.Email, token = Token });
                 }
@@ -77,7 +78,6 @@ namespace ArsamBackend.Controllers
             }
             return BadRequest(ModelState);
         }
-
         
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string id, string token)
@@ -141,7 +141,7 @@ namespace ArsamBackend.Controllers
             }
             return BadRequest(ModelState);
         }
-
+        
         [HttpPost]
         public async Task<ActionResult> GoogleLogin(string TokenId)
         {
@@ -205,7 +205,6 @@ namespace ArsamBackend.Controllers
             await signInManager.SignOutAsync();
             return Ok();
         }
-
 
     }
     
