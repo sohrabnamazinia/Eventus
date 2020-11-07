@@ -12,8 +12,6 @@ namespace ArsamBackend.ViewModels
         [Required]
         public string Name { get; set; }
 
-        public string Description { get; set; }//remove
-
         public string Status { get; set; }
 
         public int Order { get; set; }
@@ -25,11 +23,10 @@ namespace ArsamBackend.ViewModels
 
     public class OutputTaskViewModel
     {
-        public OutputTaskViewModel(int id, string name, string description, string status, int order, int eventId, List<string> assignedMembers)
+        public OutputTaskViewModel(int id, string name, string status, int order, int eventId, List<string> assignedMembers)
         {
             Id = id;
             Name = name;
-            Description = description;
             Status = status;
             Order = order;
             EventId = eventId;
@@ -38,8 +35,6 @@ namespace ArsamBackend.ViewModels
         public int Id { get; set; }
 
         public string Name { get; set; }
-
-        public string Description { get; set; }
 
         public string Status { get; set; }
 

@@ -49,7 +49,6 @@ namespace ArsamBackend.Controllers
             Task newTask = new Task()
             {
                 Name = incomeTask.Name,
-                Description = incomeTask.Description,
                 Status = "todo",
                 Order = incomeTask.Order,
                 EventId = taskEvent.Id,
@@ -58,7 +57,7 @@ namespace ArsamBackend.Controllers
             await _context.Tasks.AddAsync(newTask);
             await _context.SaveChangesAsync();
 
-            var result = new OutputTaskViewModel(newTask.Id, newTask.Name, newTask.Description,
+            var result = new OutputTaskViewModel(newTask.Id, newTask.Name,
                 newTask.Status, newTask.Order, newTask.EventId, newTask.AssignedMembers);
             return Ok(result);
         }
@@ -79,42 +78,15 @@ namespace ArsamBackend.Controllers
                 return StatusCode(403, "access denied");
 
             existTask.Name = incomeTask.Name;
-            existTask.Description = incomeTask.Name;
-            //existTask.Status = incomeTask.Status;
             existTask.Order = incomeTask.Order;
 
             await _context.SaveChangesAsync();
 
-            var result = new OutputTaskViewModel(existTask.Id, existTask.Name, existTask.Description,
+            var result = new OutputTaskViewModel(existTask.Id, existTask.Name, 
                 existTask.Status, existTask.Order, existTask.EventId, existTask.AssignedMembers);
             return Ok(result);
         }
 
-        [Authorize]
-        [HttpPost]
-        public async Task<ActionResult> UploadTest()
-        {
-            var req = Request.Form.Files;
-            foreach (var file in req)
-            {
-                if (file != null && file.Length > 0)
-                {
-                    var uploads = "C:\\Users\\alifa\\Desktop\\uploadTest";
-                    if (file.Length > 0)
-                    {
-                        var fileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(file.FileName);
-                        using (var fileStream = new FileStream(Path.Combine(uploads, fileName), FileMode.Create))
-                        {
-                            await file.CopyToAsync(fileStream);
-                        }
-                        var x = PhysicalFile(Path.Combine("C:\\Users\\alifa\\Desktop\\uploadTest", fileName), "image/png");
-
-                        return BadRequest(x);
-                    }
-                }
-            }
-            return BadRequest("member is already assigned");
-        }
         [Authorize]
         [HttpPut]
         public async Task<ActionResult> AssignMember(int id, string memberEmail)

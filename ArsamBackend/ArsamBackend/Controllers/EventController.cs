@@ -37,7 +37,7 @@ namespace ArsamBackend.Controllers
         public async Task<ActionResult> Create(InputEventViewModel incomeEvent)
         {
             var requestedUserEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
-            
+
             Event newEvent = new Event()
             {
                 Name = incomeEvent.Name,
@@ -62,39 +62,42 @@ namespace ArsamBackend.Controllers
             return Ok(result);
         }
 
-        //[Authorize]
-        //[HttpPost]
-        //public async Task<ActionResult> AddImage()
-        //{
-        //    var requestedUserEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+        [Authorize]
+        [HttpPost]
+        public async Task<ActionResult> AddImage(int eventId)
+        {
+            var requestedUserEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+            Event eve = await _context.Events.FindAsync(eventId);
 
-        //    var req = Request.Form.Files;
-        //    foreach (var file in req)
-        //    {
-        //        if (file != null && file.Length > 0)
-        //        {
-        //            var uploads = "C:\\Users\\alifa\\Desktop\\uploadTest";
-        //            if (file.Length > 0)
-        //            {
-        //                var fileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(file.FileName);
-        //                using (var fileStream = new FileStream(Path.Combine(uploads, fileName), FileMode.Create))
-        //                {
-        //                    await file.CopyToAsync(fileStream);
-        //                }
-        //                var x = PhysicalFile(Path.Combine("C:\\Users\\alifa\\Desktop\\uploadTest", fileName), "image/png");
+            if (requestedUserEmail != eve.CreatorEmail)
+                return StatusCode(403, "access denied");
+            
+            var req = Request.Form.Files;
 
-        //                return BadRequest(x);
-        //            }
-        //        }
-        //    }
-        //    return BadRequest("member is already assigned");
+            string path = ("Images/Events/");
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
 
-        //    await _context.Events.AddAsync(newEvent);
-        //    await _context.SaveChangesAsync();
+            foreach (var file in req)
+            {
+                if (file != null && file.Length > 0)
+                {
+                    var fileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(file.FileName);
+                    await using (var fileStream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
+                    {
+                        await file.CopyToAsync(fileStream);
+                    }
+                    var imagesList = eve.ImagesFilePath.ToList();
+                    imagesList.Add(Path.Combine(path, fileName));
+                    eve.ImagesFilePath = imagesList;
+                    await _context.SaveChangesAsync();
+                }
+                return BadRequest("image not found");
+            }
+            return Ok("images added");
 
-        //    var result = new OutputEventViewModel(newEvent);
-        //    return Ok(result);
-        //}
+        }
+
         //[Authorize]
         //[HttpGet]
         //public async Task<ActionResult<InputEventViewModel>> Get(int id)
@@ -229,11 +232,11 @@ namespace ArsamBackend.Controllers
             var tasks = _context.Tasks.Where(x => x.EventId == id).ToList();
             if (tasks.Count == 0)
                 return NotFound("there is no task for this event");
-            
+
             var result = new List<OutputTaskViewModel>();
             foreach (var task in tasks)
-                result.Add(new OutputTaskViewModel(task.Id, task.Name,task.Description,task.Status,task.Order,task.EventId, task.AssignedMembers));
-            
+                result.Add(new OutputTaskViewModel(task.Id, task.Name, task.Status, task.Order, task.EventId, task.AssignedMembers));
+
             return result;
         }
 
