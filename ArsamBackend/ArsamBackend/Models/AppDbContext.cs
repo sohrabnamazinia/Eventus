@@ -25,6 +25,16 @@ namespace ArsamBackend.Models
                 .HasConversion(
                     v => string.Join(',', v),
                     v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+            builder.Entity<Event>()
+                .Property(e => e.EventMembersEmail)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+            builder.Entity<Event>()
+                .Property(e => e.ImagesFilePath)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
         }
     }
 }

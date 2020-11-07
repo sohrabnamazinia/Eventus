@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Mime;
 using System.Threading.Tasks;
 using ArsamBackend.Models;
 using ArsamBackend.Security;
 using ArsamBackend.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using Task = ArsamBackend.Models.Task;
@@ -48,7 +53,7 @@ namespace ArsamBackend.Controllers
                 Status = "todo",
                 Order = incomeTask.Order,
                 EventId = taskEvent.Id,
-                AssignedMembers = new List<string>() { "fsaf", "fdsafsdafsdf"}
+                AssignedMembers = new List<string>()  
             };
             await _context.Tasks.AddAsync(newTask);
             await _context.SaveChangesAsync();
@@ -85,6 +90,31 @@ namespace ArsamBackend.Controllers
             return Ok(result);
         }
 
+        [Authorize]
+        [HttpPost]
+        public async Task<ActionResult> UploadTest()
+        {
+            var req = Request.Form.Files;
+            foreach (var file in req)
+            {
+                if (file != null && file.Length > 0)
+                {
+                    var uploads = "C:\\Users\\alifa\\Desktop\\uploadTest";
+                    if (file.Length > 0)
+                    {
+                        var fileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(file.FileName);
+                        using (var fileStream = new FileStream(Path.Combine(uploads, fileName), FileMode.Create))
+                        {
+                            await file.CopyToAsync(fileStream);
+                        }
+                        var x = PhysicalFile(Path.Combine("C:\\Users\\alifa\\Desktop\\uploadTest", fileName), "image/png");
+
+                        return BadRequest(x);
+                    }
+                }
+            }
+            return BadRequest("member is already assigned");
+        }
         [Authorize]
         [HttpPut]
         public async Task<ActionResult> AssignMember(int id, string memberEmail)

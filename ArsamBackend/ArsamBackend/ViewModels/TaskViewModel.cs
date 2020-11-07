@@ -12,7 +12,7 @@ namespace ArsamBackend.ViewModels
         [Required]
         public string Name { get; set; }
 
-        public string Description { get; set; }
+        public string Description { get; set; }//remove
 
         public string Status { get; set; }
 
