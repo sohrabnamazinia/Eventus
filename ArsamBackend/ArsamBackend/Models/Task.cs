@@ -24,6 +24,8 @@ namespace ArsamBackend.Models
         [Required]
         public int EventId { get; set; }
        
+        public bool IsDeleted { get; set; }
+
         public List<string> AssignedMembers { get; set; }
     }
 }

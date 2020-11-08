@@ -223,14 +223,15 @@ namespace ArsamBackend.Controllers
         public async Task<ActionResult<List<OutputTaskViewModel>>> GetTasks(int id)
         {
             AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
+
             if (requestedUser == null)
                 return StatusCode(401, "user not founded");
 
-            var taskEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
+            var taskEvent = await _context.Events.FindAsync(id);
             if (taskEvent == null || taskEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
 
-            var tasks = _context.Tasks.Where(x => x.EventId == id).ToList();
+            var tasks = _context.Tasks.Where(x => x.EventId == id && !x.IsDeleted ).ToList();
             if (tasks.Count == 0)
                 return NotFound("there is no task for this event");
 
