@@ -7,25 +7,19 @@ using System.Threading.Tasks;
 
 namespace ArsamBackend.Models
 {
-    public class Task
+    public class Image
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Required]
-        public string Name { get; set; }
-
-        [Required]
-        public string Status { get; set; } 
-        
-        public int Order { get; set; } 
-
-        [Required]
+        [ForeignKey("Event")] 
         public int EventId { get; set; }
-       
-        public bool IsDeleted { get; set; }
+        public Event Event { get; set; }
 
-        public List<string> AssignedMembers { get; set; }
+        public string FileName { get; set; }
+
+        public string ContentType { get; set; }
     }
 }
+

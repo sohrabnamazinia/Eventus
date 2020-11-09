@@ -16,6 +16,7 @@ namespace ArsamBackend.Models
 
         public DbSet<Event> Events { get; set; }
         public DbSet<Task> Tasks { get; set; }
+        public DbSet<Image> Images { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -27,11 +28,6 @@ namespace ArsamBackend.Models
                     v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
             builder.Entity<Event>()
                 .Property(e => e.EventMembersEmail)
-                .HasConversion(
-                    v => string.Join(',', v),
-                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
-            builder.Entity<Event>()
-                .Property(e => e.ImagesFilePath)
                 .HasConversion(
                     v => string.Join(',', v),
                     v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());

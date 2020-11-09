@@ -7,6 +7,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using ArsamBackend.Models;
+using ArsamBackend.Utilities;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ArsamBackend.ViewModels
 {
@@ -74,28 +76,65 @@ namespace ArsamBackend.ViewModels
             MaximumNumberOfMembers = createdEvent.MaximumNumberOfMembers;
             EventMembersEmail = createdEvent.EventMembersEmail;
             CreatorEmail = createdEvent.CreatorEmail;
+            ImagesPath = createdEvent.Images.Select(x => Path.GetFullPath(Constants.EventImagesPath) + x.FileName).ToList();
         }
 
-        [Required]
         public string Name { get; set; }
         public int Id { get; set; }
         
-        [Required]
         public bool IsProject { get; set; }//type of event ->project event & normal event
 
         public string Description { get; set; }
 
         public string Location { get; set; }
 
-        [Required]
         public bool IsPrivate { get; set; }
 
-        [Required]
         public DateTime StartDate { get; set; }
 
         public DateTime EndDate { get; set; }
 
-        [Required]
+        public bool IsLimitedMember { get; set; }
+
+        public int MaximumNumberOfMembers { get; set; }
+
+        public List<string> EventMembersEmail { get; set; }
+
+        public List<string> ImagesPath { get; set; }
+
+        public string CreatorEmail { get; set; }
+
+    }
+
+    public class Output2EventViewModel
+    {
+        public Output2EventViewModel(Event createdEvent)
+        {
+            Name = createdEvent.Name;
+            Description = createdEvent.Description;
+            Id = createdEvent.Id;
+            Location = createdEvent.Location;
+            StartDate = createdEvent.StartDate;
+            EndDate = createdEvent.EndDate;
+            IsLimitedMember = createdEvent.IsLimitedMember;
+            MaximumNumberOfMembers = createdEvent.MaximumNumberOfMembers;
+            EventMembersEmail = createdEvent.EventMembersEmail;
+            CreatorEmail = createdEvent.CreatorEmail;
+            ImagesPath = createdEvent.Images.Select(x => Path.GetFullPath(Constants.EventImagesPath) + x.FileName).ToList();
+        }
+
+        public string Name { get; set; }
+
+        public int Id { get; set; }
+
+        public string Description { get; set; }
+
+        public string Location { get; set; }
+
+        public DateTime StartDate { get; set; }
+
+        public DateTime EndDate { get; set; }
+
         public bool IsLimitedMember { get; set; }
 
         public int MaximumNumberOfMembers { get; set; }
@@ -105,6 +144,8 @@ namespace ArsamBackend.ViewModels
         public FileStream Image { get; set; }
 
         public string CreatorEmail { get; set; }
+
+        public List<string> ImagesPath { get; set; }
 
     }
 }

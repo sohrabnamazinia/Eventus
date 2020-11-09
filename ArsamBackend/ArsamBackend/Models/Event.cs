@@ -36,7 +36,7 @@ namespace ArsamBackend.Models
         [Required]
         public DateTime EndDate { get; set; }
 
-        public List<string> ImagesFilePath { get; set; }
+        public ICollection<Image> Images { get; set; }
 
         [Required]
         public bool IsLimitedMember { get; set; }

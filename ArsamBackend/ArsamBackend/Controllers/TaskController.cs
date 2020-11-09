@@ -52,6 +52,7 @@ namespace ArsamBackend.Controllers
                 Status = "todo",
                 Order = incomeTask.Order,
                 EventId = taskEvent.Id,
+                IsDeleted = false,
                 AssignedMembers = new List<string>()  
             };
             await _context.Tasks.AddAsync(newTask);
@@ -69,6 +70,9 @@ namespace ArsamBackend.Controllers
             var userEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
             var existTask = await _context.Tasks.FindAsync(id);
 
+            if (existTask == null || existTask.IsDeleted)
+                return StatusCode(404, "task not found");
+
             Event taskEvent = await _context.Events.FindAsync(existTask.EventId);
 
             if (taskEvent == null)
@@ -79,6 +83,7 @@ namespace ArsamBackend.Controllers
 
             existTask.Name = incomeTask.Name;
             existTask.Order = incomeTask.Order;
+            existTask.Status = incomeTask.Status;
 
             await _context.SaveChangesAsync();
 
@@ -88,11 +93,40 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [HttpDelete]
+        public async Task<ActionResult> Delete(int id)
+        {
+            var userEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+            var existTask = await _context.Tasks.FindAsync(id);
+
+            if (existTask == null || existTask.IsDeleted)
+                return StatusCode(404, "task not found");
+
+            Event taskEvent = await _context.Events.FindAsync(existTask.EventId);
+
+            if (taskEvent == null)
+                return StatusCode(404, "event not found");
+
+            if (!hasAccess(userEmail, existTask, taskEvent))
+                return StatusCode(403, "access denied");
+
+            existTask.IsDeleted = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok("task deleted");
+        }
+
+
+        [Authorize]
         [HttpPut]
         public async Task<ActionResult> AssignMember(int id, string memberEmail)
         {
             var userEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
             var existTask = await _context.Tasks.FindAsync(id);
+
+            if (existTask == null || existTask.IsDeleted)
+                return StatusCode(404, "task not found");
 
             Event taskEvent = await _context.Events.FindAsync(existTask.EventId);
 
@@ -107,8 +141,11 @@ namespace ArsamBackend.Controllers
                 var assignedMembersList = existTask.AssignedMembers.ToList();
                 assignedMembersList.Add(memberEmail);
                 existTask.AssignedMembers = assignedMembersList;
+                existTask.Status = "doing";
                 await _context.SaveChangesAsync();
-                return Ok(existTask.AssignedMembers);
+                var result = new OutputTaskViewModel(existTask.Id, existTask.Name,
+                    existTask.Status, existTask.Order, existTask.EventId, existTask.AssignedMembers);
+                return Ok(result);
             }
 
             return BadRequest("member is already assigned");
@@ -118,6 +155,9 @@ namespace ArsamBackend.Controllers
         [NonAction]
         private bool hasAccess(string userEmail, Task existTask, Event taskEvent)
         {
+            if (userEmail == taskEvent.CreatorEmail)
+                return true;
+
             if (existTask.Status == "todo")
             {
                 if (userEmail == taskEvent.CreatorEmail)
