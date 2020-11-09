@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using ArsamBackend.Models;
 using ArsamBackend.Security;
+using ArsamBackend.Utilities;
 using ArsamBackend.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using MediaTypeHeaderValue = Microsoft.Net.Http.Headers.MediaTypeHeaderValue;
 using Task = System.Threading.Tasks.Task;
 
 namespace ArsamBackend.Controllers
@@ -52,7 +54,7 @@ namespace ArsamBackend.Controllers
                 EventMembersEmail = new List<string>(),
                 CreatorEmail = requestedUserEmail,
                 IsDeleted = false,
-                ImagesFilePath = new List<string>()
+                Images = new List<Image>()
             };
 
             await _context.Events.AddAsync(newEvent);
@@ -68,13 +70,14 @@ namespace ArsamBackend.Controllers
         {
             var requestedUserEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
             Event eve = await _context.Events.FindAsync(eventId);
+            _context.Events.Include(c => c.Images).ToList();
 
             if (requestedUserEmail != eve.CreatorEmail)
                 return StatusCode(403, "access denied");
-            
+
             var req = Request.Form.Files;
 
-            string path = ("Images/Events/");
+            string path = Constants.EventImagesPath;
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
 
@@ -87,136 +90,125 @@ namespace ArsamBackend.Controllers
                     {
                         await file.CopyToAsync(fileStream);
                     }
-                    var imagesList = eve.ImagesFilePath.ToList();
-                    imagesList.Add(Path.Combine(path, fileName));
-                    eve.ImagesFilePath = imagesList;
+
+                    var image = new Image()
+                    {
+                        EventId = eventId,
+                        Event = eve,
+                        FileName =  fileName,
+                        ContentType = file.ContentType
+                    };
+                    eve.Images.Add(image);
                     await _context.SaveChangesAsync();
                 }
                 else
                     return BadRequest("image not found");
             }
+
             return Ok("images added");
 
         }
 
-        //[Authorize]
-        //[HttpGet]
-        //public async Task<ActionResult<InputEventViewModel>> Get(int id)
-        //{
-        //    AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
-        //    if (requestedUser == null)
-        //        return StatusCode(401, "user not founded");
+        [Authorize]
+        [HttpGet]
+        public async Task<ActionResult> Get(int id)
+        {
+            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
 
-        //    var resultEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
-        //    if (resultEvent == null || resultEvent.IsDeleted)
-        //        return NotFound("no event found by this id: " + id);
+            var resultEvent = await _context.Events.FindAsync(id);
+            _context.Events.Include(c => c.Images).ToList();
 
+            if (resultEvent == null || resultEvent.IsDeleted)
+                return NotFound("no event found by this id: " + id);
 
-        //    if (resultEvent.CreatorEmail == requestedUser.Email) //creator
-        //    {
-        //        var result = new ActionResult<InputEventViewModel>(new InputEventViewModel()
-        //        {
-        //            Name = resultEvent.Name,
-        //            id = id,
-        //            IsPrivate = resultEvent.IsPrivate,
-        //            Location = resultEvent.Location,
-        //            CreatorEmail = resultEvent.CreatorEmail
-        //        });
-        //        return result;
-        //    }
-        //    else // everyone
-        //    {
-        //        var result = new ActionResult<InputEventViewModel>(new InputEventViewModel()
-        //        {
-        //            id = resultEvent.Id,
-        //            Name = resultEvent.Name,
-        //            Location = resultEvent.Location,
-        //            IsPrivate = resultEvent.IsPrivate
-        //        });
-        //        return result;
-        //    }
-        //}
+            if (resultEvent.CreatorEmail == requestedUser.Email) //creator
+            {
+                var resultForCreator = new OutputEventViewModel(resultEvent);
+                return Ok(resultForCreator);
+            }
+            else if (resultEvent.EventMembersEmail.Contains(requestedUser.Email)) //members
+            {
+                var resultForMembers = new Output2EventViewModel(resultEvent);
+                return Ok(resultForMembers);
+            }
 
-        //[Authorize]
-        //[HttpPut]
-        //public async Task<ActionResult<InputEventViewModel>> Update(int id, InputEventViewModel incomeInputEvent)
-        //{
-        //    AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
-        //    if (requestedUser == null)
-        //        return StatusCode(401, "user not founded");
+            if (resultEvent.IsPrivate)
+                return StatusCode(403, "access denied");
 
-        //    Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
+            var resultForAll = new Output2EventViewModel(resultEvent);
+            return Ok(resultForAll);
+        }
 
-        //    if (existEvent == null || existEvent.IsDeleted)
-        //        return NotFound("no event found by this id: " + id);
+        [Authorize]
+        [HttpPut]
+        public async Task<ActionResult> Update(int id, InputEventViewModel incomeEvent)
+        {
+            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
 
-        //    if (existEvent.CreatorEmail != requestedUser.Email)
-        //        return StatusCode(403, "access denied");
+            Event existEvent = await _context.Events.FindAsync(id);
+            _context.Events.Include(c => c.Images).ToList();
 
-        //    existEvent.Location = incomeInputEvent.Location;
-        //    existEvent.IsPrivate = incomeInputEvent.IsPrivate;
-        //    existEvent.Name = incomeInputEvent.Name;
-        //    await _context.SaveChangesAsync();
+            if (existEvent == null || existEvent.IsDeleted)
+                return NotFound("no event found by this id: " + id);
 
-        //    var result = new InputEventViewModel()
-        //    {
-        //        Name = existEvent.Name,
-        //        id = existEvent.Id,
-        //        IsPrivate = existEvent.IsPrivate,
-        //        Location = existEvent.Location,
-        //        CreatorEmail = existEvent.CreatorEmail
-        //    };
+            if (existEvent.CreatorEmail != requestedUser.Email)
+                return StatusCode(403, "access denied");
 
-        //    return Ok(result);
-        //}
+            existEvent.Name = incomeEvent.Name;
+            existEvent.IsProject = incomeEvent.IsProject;
+            existEvent.Description = incomeEvent.Description;
+            existEvent.IsPrivate = incomeEvent.IsPrivate;
+            existEvent.StartDate = incomeEvent.StartDate;
+            existEvent.EndDate = incomeEvent.EndDate;
+            existEvent.IsLimitedMember = incomeEvent.IsLimitedMember;
+            existEvent.MaximumNumberOfMembers = incomeEvent.MaximumNumberOfMembers;
 
-        //[Authorize]
-        //[HttpDelete]
-        //public async Task<ActionResult> Delete(int id)
-        //{
-        //    AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
-        //    if (requestedUser == null)
-        //        return StatusCode(401, "user not founded");
+            await _context.SaveChangesAsync();
 
-        //    Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
+            var result = new OutputEventViewModel(existEvent);
+            return Ok(result);
+        }
 
-        //    if (existEvent == null || existEvent.IsDeleted)
-        //        return NotFound("no event found by this id: " + id);
+        [Authorize]
+        [HttpDelete]
+        public async Task<ActionResult> Delete(int id)
+        {
+            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
+            if (requestedUser == null)
+                return StatusCode(401, "user not founded");
 
-        //    if (existEvent.CreatorEmail != requestedUser.Email)
-        //        return StatusCode(403, "access denied");
+            Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
 
-        //    existEvent.IsDeleted = true;
-        //    await _context.SaveChangesAsync();
-        //    return Ok("event deleted");
-        //}
+            if (existEvent == null || existEvent.IsDeleted)
+                return NotFound("no event found by this id: " + id);
 
-        //[Authorize]
-        //[HttpGet]
-        //public async Task<ActionResult<List<InputEventViewModel>>> GetAll()
-        //{
-        //    AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
-        //    if (requestedUser == null)
-        //        return StatusCode(401, "user not founded");
+            if (existEvent.CreatorEmail != requestedUser.Email)
+                return StatusCode(403, "access denied");
 
-        //    var events = await _context.Events.Where(x => !x.IsDeleted).ToListAsync();
-        //    if (events == null)
-        //        return NotFound("no event found");
-        //    var result = new List<InputEventViewModel>();
-        //    foreach (var ev in events)
-        //    {
-        //        result.Add(new InputEventViewModel()
-        //        {
-        //            Name = ev.Name,
-        //            Location = ev.Location,
-        //            CreatorEmail = ev.CreatorEmail,
-        //            id = ev.Id,
-        //            IsPrivate = ev.IsPrivate
-        //        });
-        //    }
-        //    return Ok(result);
+            existEvent.IsDeleted = true;
+            await _context.SaveChangesAsync();
+            return Ok("event deleted");
+        }
 
-        //}
+        [Authorize]
+        [HttpGet]
+        public async Task<ActionResult> GetAll()
+        {
+            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
+            if (requestedUser == null)
+                return StatusCode(401, "user not founded");
+
+            var events = await _context.Events.Include(c => c.Images).Where(x => !x.IsDeleted).ToListAsync();
+
+            if (events == null)
+                return NotFound("no event found");
+
+            var result = new List<OutputEventViewModel>();
+            foreach (var ev in events)
+                result.Add(new OutputEventViewModel(ev));
+
+            return Ok(result);
+        }
 
         [Authorize]
         [HttpGet]
@@ -231,13 +223,14 @@ namespace ArsamBackend.Controllers
             if (taskEvent == null || taskEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
 
-            var tasks = _context.Tasks.Where(x => x.EventId == id && !x.IsDeleted ).ToList();
+            var tasks = _context.Tasks.Where(x => x.EventId == id && !x.IsDeleted).ToList();
             if (tasks.Count == 0)
                 return NotFound("there is no task for this event");
 
             var result = new List<OutputTaskViewModel>();
             foreach (var task in tasks)
-                result.Add(new OutputTaskViewModel(task.Id, task.Name, task.Status, task.Order, task.EventId, task.AssignedMembers));
+                result.Add(new OutputTaskViewModel(task.Id, task.Name, task.Status, task.Order, task.EventId,
+                    task.AssignedMembers));
 
             return result;
         }
@@ -252,8 +245,24 @@ namespace ArsamBackend.Controllers
                 var scheme = headerValue.Scheme;
                 token = headerValue.Parameter;
             }
+
             var userEmail = JWTokenHandler.GetClaim(token, "nameid");
             return await _context.Users.SingleOrDefaultAsync(x => x.Email == userEmail);
+        }
+
+        [NonAction]
+        private List<FileStreamResult> FindImagesByPath(ICollection<Image> images)
+        {
+            var result = new List<FileStreamResult>();
+            foreach (var image in images)
+            {
+                using (FileStream file = new FileStream(Constants.EventImagesPath + image.FileName, FileMode.Open))
+                {
+                    result.Add(new FileStreamResult(file, new MediaTypeHeaderValue(image.ContentType)));
+                }
+
+            }
+            return result;
         }
     }
 }

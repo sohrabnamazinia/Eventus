@@ -155,6 +155,9 @@ namespace ArsamBackend.Controllers
         [NonAction]
         private bool hasAccess(string userEmail, Task existTask, Event taskEvent)
         {
+            if (userEmail == taskEvent.CreatorEmail)
+                return true;
+
             if (existTask.Status == "todo")
             {
                 if (userEmail == taskEvent.CreatorEmail)

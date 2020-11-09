@@ -16,5 +16,6 @@ namespace ArsamBackend.Utilities
         public const string EmailConfirmationError = "Email has not been confirmed yet!";
         public const string InvalidLoginError = "Invalid login attempt!";
         public const string NotFoundError = "User not found!";
+        public const string EventImagesPath = ("Images/Events/");
     }
 }
