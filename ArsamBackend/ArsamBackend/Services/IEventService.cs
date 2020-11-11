@@ -1,4 +1,5 @@
 ﻿using ArsamBackend.Models;
+using ArsamBackend.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace ArsamBackend.Services
 {
-    public interface IJWTHandler
+    public interface IEventService
     {
-        public string GenerateToken(AppUser user);
+        public Task<ICollection<Event>> FilterEvents(FilterEventsViewModel model);
     }
 }

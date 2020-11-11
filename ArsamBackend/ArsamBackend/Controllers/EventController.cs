@@ -5,9 +5,11 @@ using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using ArsamBackend.Models;
 using ArsamBackend.Security;
+using ArsamBackend.Services;
 using ArsamBackend.Utilities;
 using ArsamBackend.ViewModels;
 using Microsoft.AspNetCore.Authentication;
@@ -26,11 +28,13 @@ namespace ArsamBackend.Controllers
     public class EventController : ControllerBase
     {
         private readonly ILogger<EventController> _logger;
+        private readonly IEventService _eventService;
         private readonly AppDbContext _context;
 
-        public EventController(AppDbContext context, ILogger<EventController> logger)
+        public EventController(AppDbContext context, ILogger<EventController> logger, IEventService eventService)
         {
             _logger = logger;
+            this._eventService = eventService;
             this._context = context;
         }
 
@@ -38,7 +42,7 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(InputEventViewModel incomeEvent)
         {
-            var requestedUserEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+            var requestedUserEmail = JWTService.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
 
             Event newEvent = new Event()
             {
@@ -68,7 +72,7 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> AddImage(int eventId)
         {
-            var requestedUserEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+            var requestedUserEmail = JWTService.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
             Event eve = await _context.Events.FindAsync(eventId);
             _context.Events.Include(c => c.Images).ToList();
 
@@ -235,6 +239,16 @@ namespace ArsamBackend.Controllers
             return result;
         }
 
+        [HttpPost]
+        public async Task<ActionResult<ICollection<Event>>> Filter(FilterEventsViewModel model)
+        {
+            var FilteredEvents = await _eventService.FilterEvents(model);
+            return Ok(FilteredEvents);
+        }
+
+
+
+        
         //methods
         [NonAction]
         private async Task<AppUser> FindUserByTokenAsync(string authorization)
@@ -246,7 +260,7 @@ namespace ArsamBackend.Controllers
                 token = headerValue.Parameter;
             }
 
-            var userEmail = JWTokenHandler.GetClaim(token, "nameid");
+            var userEmail = JWTService.GetClaim(token, "nameid");
             return await _context.Users.SingleOrDefaultAsync(x => x.Email == userEmail);
         }
 

@@ -37,9 +37,9 @@ namespace ArsamBackend.Controllers
         private readonly ILogger<AccountController> _logger;
         public readonly JwtSecurityTokenHandler handler;
         private readonly IDataProtector protector;
-        private readonly IJWTHandler _jWTHandler;
+        private readonly IJWTService _jWTHandler;
 
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTHandler jWTHandler)
+        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;

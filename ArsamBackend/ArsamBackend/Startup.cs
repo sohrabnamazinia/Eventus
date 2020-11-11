@@ -13,6 +13,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ArsamBackend.Services;
 using ArsamBackend.Security;
+using Newtonsoft.Json;
 
 namespace ArsamBackend
 {
@@ -86,8 +87,12 @@ namespace ArsamBackend
             );
             #endregion Auth Policies
             #region Services
-            services.AddControllers();
-            services.AddScoped<IJWTHandler, JWTokenHandler>();
+            services.AddControllers().AddNewtonsoftJson(options => 
+            {
+              options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+            });
+            services.AddScoped<IJWTService, JWTService>();
+            services.AddScoped<IEventService, EventService>();
             #endregion Services
             #region Db
             services.AddIdentity<AppUser, IdentityRole>(options => 
