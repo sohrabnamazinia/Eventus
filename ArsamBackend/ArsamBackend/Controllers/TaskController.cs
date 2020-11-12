@@ -37,7 +37,7 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(InputTaskViewModel incomeTask)
         {
-            var userEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+            var userEmail = JWTService.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
             Event taskEvent = await _context.Events.FindAsync(incomeTask.EventId);
 
             if (taskEvent == null)
@@ -67,7 +67,7 @@ namespace ArsamBackend.Controllers
         [HttpPut]
         public async Task<ActionResult> Update(int id, InputTaskViewModel incomeTask)
         {
-            var userEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+            var userEmail = JWTService.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
             var existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)
@@ -96,7 +96,7 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
-            var userEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+            var userEmail = JWTService.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
             var existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)
@@ -122,7 +122,7 @@ namespace ArsamBackend.Controllers
         [HttpPut]
         public async Task<ActionResult> AssignMember(int id, string memberEmail)
         {
-            var userEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+            var userEmail = JWTService.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
             var existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)
