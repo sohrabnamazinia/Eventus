@@ -17,15 +17,22 @@ namespace ArsamBackend.Models
         public string Name { get; set; }
 
         [Required]
-        public string Status { get; set; } 
-        
-        public int Order { get; set; } 
+        public Status Status { get; set; }
+
+        public int Order { get; set; }
 
         [Required]
-        public int EventId { get; set; }
-       
+        public virtual Event Event { get; set; }
+
         public bool IsDeleted { get; set; }
 
-        public List<string> AssignedMembers { get; set; }
+        public virtual List<AppUser> AssignedMembers { get; set; }
+    }
+
+    public enum Status
+    {
+        Todo = 1,
+        Doing = 2,
+        Done = 3
     }
 }

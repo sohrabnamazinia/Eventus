@@ -21,16 +21,6 @@ namespace ArsamBackend.Models
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-            builder.Entity<Task>()
-                .Property(e => e.AssignedMembers)
-                .HasConversion(
-                    v => string.Join(',', v),
-                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
-            builder.Entity<Event>()
-                .Property(e => e.EventMembersEmail)
-                .HasConversion(
-                    v => string.Join(',', v),
-                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
         }
     }
 }

@@ -17,6 +17,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace ArsamBackend.Security
 {
@@ -63,6 +64,12 @@ namespace ArsamBackend.Security
             var userEmail = GetClaim(token, "nameid");
             return userEmail;
         }
+        public static async Task<AppUser> FindUserByTokenAsync(string authorization, AppDbContext context)
+        {
+            var userEmail = FindEmailByToken(authorization);
+            return await context.Users.SingleOrDefaultAsync(x => x.Email == userEmail);
+        }
+
 
         #region utilities
 

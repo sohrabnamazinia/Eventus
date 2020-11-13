@@ -26,7 +26,7 @@ namespace ArsamBackend.Models
 
         public bool IsPrivate { get; set; }
 
-        public string CreatorEmail { get; set; }
+        public virtual AppUser Creator { get; set; }
 
         public bool IsDeleted { get; set; }
 
@@ -36,14 +36,17 @@ namespace ArsamBackend.Models
         [Required]
         public DateTime EndDate { get; set; }
 
-        public ICollection<Image> Images { get; set; }
+        public virtual ICollection<Image> Images { get; set; }
 
         [Required]
         public bool IsLimitedMember { get; set; }
 
         public int MaximumNumberOfMembers { get; set; }
 
-        public List<string> EventMembersEmail { get; set; }
+        public virtual List<AppUser> EventMembers { get; set; }
 
+        public virtual List<Task> Tasks { get; set; }
+
+        public virtual Category Categories { get; set; }
     }
 }
