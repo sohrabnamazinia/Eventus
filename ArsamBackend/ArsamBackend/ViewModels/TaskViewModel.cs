@@ -4,6 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using ArsamBackend.Models;
+using Task = ArsamBackend.Models.Task;
 
 namespace ArsamBackend.ViewModels
 {
@@ -12,7 +14,7 @@ namespace ArsamBackend.ViewModels
         [Required]
         public string Name { get; set; }
 
-        public string Status { get; set; }
+        public int Status { get; set; }
 
         public int Order { get; set; }
 
@@ -23,26 +25,26 @@ namespace ArsamBackend.ViewModels
 
     public class OutputTaskViewModel
     {
-        public OutputTaskViewModel(int id, string name, string status, int order, int eventId, List<string> assignedMembers)
+        public OutputTaskViewModel(Task task)
         {
-            Id = id;
-            Name = name;
-            Status = status;
-            Order = order;
-            EventId = eventId;
-            AssignedMembers = assignedMembers;
+            Id = task.Id;
+            Name = task.Name;
+            Status = (int)task.Status;
+            Order = task.Order;
+            EventId = task.Event.Id;
+            AssignedMembers = task.AssignedMembers;
         }
         public int Id { get; set; }
 
         public string Name { get; set; }
 
-        public string Status { get; set; }
+        public int Status { get; set; }
 
         public int Order { get; set; }
 
         public int EventId { get; set; }
 
-        public List<string> AssignedMembers { get; set; }
+        public List<AppUser> AssignedMembers { get; set; }
 
     }
 

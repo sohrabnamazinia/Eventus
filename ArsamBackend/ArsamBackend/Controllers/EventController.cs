@@ -38,7 +38,7 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(InputEventViewModel incomeEvent)
         {
-            var requestedUserEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
 
             Event newEvent = new Event()
             {
@@ -51,10 +51,11 @@ namespace ArsamBackend.Controllers
                 EndDate = incomeEvent.EndDate,
                 IsLimitedMember = incomeEvent.IsLimitedMember,
                 MaximumNumberOfMembers = incomeEvent.MaximumNumberOfMembers,
-                EventMembersEmail = new List<string>(),
-                CreatorEmail = requestedUserEmail,
+                EventMembers = new List<AppUser>(),
+                Creator = requestedUser,
                 IsDeleted = false,
-                Images = new List<Image>()
+                Images = new List<Image>(),
+                Categories = InputEventViewModel.BitWiseOr(incomeEvent.Categories)
             };
 
             await _context.Events.AddAsync(newEvent);
@@ -68,11 +69,10 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> AddImage(int eventId)
         {
-            var requestedUserEmail = JWTokenHandler.FindEmailByToken(Request.Headers[HeaderNames.Authorization]);
+            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Event eve = await _context.Events.FindAsync(eventId);
-            _context.Events.Include(c => c.Images).ToList();
 
-            if (requestedUserEmail != eve.CreatorEmail)
+            if (requestedUser != eve.Creator)
                 return StatusCode(403, "access denied");
 
             var req = Request.Form.Files;
@@ -113,20 +113,19 @@ namespace ArsamBackend.Controllers
         [HttpGet]
         public async Task<ActionResult> Get(int id)
         {
-            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
+            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
 
-            var resultEvent = await _context.Events.FindAsync(id);
-            _context.Events.Include(c => c.Images).ToList();
+            Event resultEvent = await _context.Events.FindAsync(id);
 
             if (resultEvent == null || resultEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
 
-            if (resultEvent.CreatorEmail == requestedUser.Email) //creator
+            if (resultEvent.Creator == requestedUser) //creator
             {
                 var resultForCreator = new OutputEventViewModel(resultEvent);
                 return Ok(resultForCreator);
             }
-            else if (resultEvent.EventMembersEmail.Contains(requestedUser.Email)) //members
+            else if (resultEvent.EventMembers.Contains(requestedUser)) //members
             {
                 var resultForMembers = new Output2EventViewModel(resultEvent);
                 return Ok(resultForMembers);
@@ -143,15 +142,13 @@ namespace ArsamBackend.Controllers
         [HttpPut]
         public async Task<ActionResult> Update(int id, InputEventViewModel incomeEvent)
         {
-            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
-
+            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Event existEvent = await _context.Events.FindAsync(id);
-            _context.Events.Include(c => c.Images).ToList();
 
             if (existEvent == null || existEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
 
-            if (existEvent.CreatorEmail != requestedUser.Email)
+            if (existEvent.Creator != requestedUser)
                 return StatusCode(403, "access denied");
 
             existEvent.Name = incomeEvent.Name;
@@ -162,6 +159,7 @@ namespace ArsamBackend.Controllers
             existEvent.EndDate = incomeEvent.EndDate;
             existEvent.IsLimitedMember = incomeEvent.IsLimitedMember;
             existEvent.MaximumNumberOfMembers = incomeEvent.MaximumNumberOfMembers;
+            existEvent.Categories = InputEventViewModel.BitWiseOr(incomeEvent.Categories);
 
             await _context.SaveChangesAsync();
 
@@ -173,7 +171,7 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
-            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
+            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             if (requestedUser == null)
                 return StatusCode(401, "user not founded");
 
@@ -182,7 +180,7 @@ namespace ArsamBackend.Controllers
             if (existEvent == null || existEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
 
-            if (existEvent.CreatorEmail != requestedUser.Email)
+            if (existEvent.Creator != requestedUser)
                 return StatusCode(403, "access denied");
 
             existEvent.IsDeleted = true;
@@ -194,11 +192,11 @@ namespace ArsamBackend.Controllers
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {
-            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
+            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             if (requestedUser == null)
                 return StatusCode(401, "user not founded");
 
-            var events = await _context.Events.Include(c => c.Images).Where(x => !x.IsDeleted).ToListAsync();
+            var events = await _context.Events.Where(x => !x.IsDeleted).ToListAsync();
 
             if (events == null)
                 return NotFound("no event found");
@@ -214,55 +212,24 @@ namespace ArsamBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<List<OutputTaskViewModel>>> GetTasks(int id)
         {
-            AppUser requestedUser = await FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization]);
-
+            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             if (requestedUser == null)
                 return StatusCode(401, "user not founded");
 
-            var taskEvent = await _context.Events.FindAsync(id);
+            Event taskEvent = await _context.Events.FindAsync(id);
             if (taskEvent == null || taskEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
 
-            var tasks = _context.Tasks.Where(x => x.EventId == id && !x.IsDeleted).ToList();
+            var tasks = taskEvent.Tasks;
             if (tasks.Count == 0)
                 return NotFound("there is no task for this event");
 
             var result = new List<OutputTaskViewModel>();
             foreach (var task in tasks)
-                result.Add(new OutputTaskViewModel(task.Id, task.Name, task.Status, task.Order, task.EventId,
-                    task.AssignedMembers));
+                result.Add(new OutputTaskViewModel(task));
 
             return result;
         }
 
-        //methods
-        [NonAction]
-        private async Task<AppUser> FindUserByTokenAsync(string authorization)
-        {
-            string token = string.Empty;
-            if (AuthenticationHeaderValue.TryParse(authorization, out var headerValue))
-            {
-                var scheme = headerValue.Scheme;
-                token = headerValue.Parameter;
-            }
-
-            var userEmail = JWTokenHandler.GetClaim(token, "nameid");
-            return await _context.Users.SingleOrDefaultAsync(x => x.Email == userEmail);
-        }
-
-        [NonAction]
-        private List<FileStreamResult> FindImagesByPath(ICollection<Image> images)
-        {
-            var result = new List<FileStreamResult>();
-            foreach (var image in images)
-            {
-                using (FileStream file = new FileStream(Constants.EventImagesPath + image.FileName, FileMode.Open))
-                {
-                    result.Add(new FileStreamResult(file, new MediaTypeHeaderValue(image.ContentType)));
-                }
-
-            }
-            return result;
-        }
     }
 }

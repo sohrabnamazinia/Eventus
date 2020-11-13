@@ -97,7 +97,7 @@ namespace ArsamBackend
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             }).AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders(); 
             services.AddDbContextPool<AppDbContext>(
-            options => options.UseSqlServer(_config.GetConnectionString(Constants.ConnectionStringKey)));
+            options => options.UseSqlServer(_config.GetConnectionString(Constants.ConnectionStringKey)).UseLazyLoadingProxies());
             services.AddSingleton<DataProtectionPurposeStrings>();
             #endregion Db
         }

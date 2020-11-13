@@ -15,6 +15,15 @@ namespace ArsamBackend.ViewModels
 
     public class InputEventViewModel
     {
+        public static Category BitWiseOr(List<int> categories)
+        {
+            Category result = 0;
+            foreach (var i in categories)
+                result |= (Category)i;
+
+            return result;
+        }
+
         [Required]
         public string Name { get; set; }
         
@@ -40,28 +49,13 @@ namespace ArsamBackend.ViewModels
 
         public int MaximumNumberOfMembers { get; set; }
 
+        public List<int> Categories { get; set; }
 
+       
     }
 
     public class OutputEventViewModel
     {
-        public OutputEventViewModel(string name, string description, int id, bool isProject, string location,
-            bool isPrivate, DateTime startDate, DateTime endDate, bool isLimitedMember,
-            int maximumNumberOfMembers, List<string> eventMembersEmail)
-        {
-            Name = name;
-            Description = description;
-            Id = id;
-            IsProject = isProject;
-            Location = location;
-            IsPrivate = isPrivate;
-            StartDate = startDate;
-            EndDate = endDate;
-            IsLimitedMember = isLimitedMember;
-            MaximumNumberOfMembers = maximumNumberOfMembers;
-            EventMembersEmail = eventMembersEmail;
-        }
-
         public OutputEventViewModel(Event createdEvent)
         {
             Name = createdEvent.Name;
@@ -74,11 +68,20 @@ namespace ArsamBackend.ViewModels
             EndDate = createdEvent.EndDate;
             IsLimitedMember = createdEvent.IsLimitedMember;
             MaximumNumberOfMembers = createdEvent.MaximumNumberOfMembers;
-            EventMembersEmail = createdEvent.EventMembersEmail;
-            CreatorEmail = createdEvent.CreatorEmail;
+            EventMembers = createdEvent.EventMembers;
+            Creator = new OutputAppUserViewModel(createdEvent.Creator);
             ImagesPath = createdEvent.Images.Select(x => Path.GetFullPath(Constants.EventImagesPath) + x.FileName).ToList();
+            Categories = ConvertCategoriesToList(createdEvent.Categories);
         }
+        private List<int> ConvertCategoriesToList(Category category)
+        {
+            List<int> result = new List<int>();
+            foreach (Category cat in Enum.GetValues(typeof(Category)))
+                if ((category & cat) != 0)
+                    result.Add((int)cat);
 
+            return result;
+        }
         public string Name { get; set; }
         public int Id { get; set; }
         
@@ -98,11 +101,13 @@ namespace ArsamBackend.ViewModels
 
         public int MaximumNumberOfMembers { get; set; }
 
-        public List<string> EventMembersEmail { get; set; }
+        public List<AppUser> EventMembers { get; set; }
 
         public List<string> ImagesPath { get; set; }
 
-        public string CreatorEmail { get; set; }
+        public OutputAppUserViewModel Creator { get; set; }
+
+        public List<int> Categories { get; set; }
 
     }
 
@@ -118,11 +123,20 @@ namespace ArsamBackend.ViewModels
             EndDate = createdEvent.EndDate;
             IsLimitedMember = createdEvent.IsLimitedMember;
             MaximumNumberOfMembers = createdEvent.MaximumNumberOfMembers;
-            EventMembersEmail = createdEvent.EventMembersEmail;
-            CreatorEmail = createdEvent.CreatorEmail;
+            EventMembers = createdEvent.EventMembers;
+            Creator = new OutputAppUserViewModel(createdEvent.Creator);
             ImagesPath = createdEvent.Images.Select(x => Path.GetFullPath(Constants.EventImagesPath) + x.FileName).ToList();
+            Categories = ConvertCategoriesToList(createdEvent.Categories);
         }
+        private List<int> ConvertCategoriesToList(Category category)
+        {
+            List<int> result = new List<int>();
+            foreach (Category cat in Enum.GetValues(typeof(Category)))
+                if ((category & cat) != 0)
+                    result.Add((int)cat);
 
+            return result;
+        }
         public string Name { get; set; }
 
         public int Id { get; set; }
@@ -139,13 +153,15 @@ namespace ArsamBackend.ViewModels
 
         public int MaximumNumberOfMembers { get; set; }
 
-        public List<string> EventMembersEmail { get; set; }
+        public List<AppUser> EventMembers { get; set; }
 
         public FileStream Image { get; set; }
 
-        public string CreatorEmail { get; set; }
+        public OutputAppUserViewModel Creator { get; set; }
 
         public List<string> ImagesPath { get; set; }
+
+        public List<int> Categories { get; set; }
 
     }
 }
