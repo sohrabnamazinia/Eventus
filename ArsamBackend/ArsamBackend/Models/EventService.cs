@@ -25,8 +25,8 @@ namespace ArsamBackend.Models
             var events = _context.Events.Include(x => x.Images).Where(x =>
             (model.Name == null || x.Name == model.Name) &&
             (model.IsPrivate == null || x.IsPrivate == model.IsPrivate) &&
-            (model.MembersCountMin == null || x.EventMembersEmail.Count() >= model.MembersCountMin) &&
-            (model.MembersCountMax == null || x.EventMembersEmail.Count() <= model.MembersCountMax) &&
+            (model.MembersCountMin == null || x.EventMembers.Count() >= model.MembersCountMin) &&
+            (model.MembersCountMax == null || x.EventMembers.Count() <= model.MembersCountMax) &&
             (model.DateMin == null || DateTime.Compare(x.StartDate, (DateTime)model.DateMin) >= 0) &&
             (model.DateMax == null || DateTime.Compare(x.EndDate, (DateTime)model.DateMax) <= 0));
             return await events.ToListAsync();

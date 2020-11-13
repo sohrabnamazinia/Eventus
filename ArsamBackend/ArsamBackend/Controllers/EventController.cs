@@ -38,7 +38,7 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(InputEventViewModel incomeEvent)
         {
-            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
 
             Event newEvent = new Event()
             {
@@ -69,7 +69,7 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> AddImage(int eventId)
         {
-            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Event eve = await _context.Events.FindAsync(eventId);
 
             if (requestedUser != eve.Creator)
@@ -113,7 +113,7 @@ namespace ArsamBackend.Controllers
         [HttpGet]
         public async Task<ActionResult> Get(int id)
         {
-            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
 
             Event resultEvent = await _context.Events.FindAsync(id);
 
@@ -142,7 +142,7 @@ namespace ArsamBackend.Controllers
         [HttpPut]
         public async Task<ActionResult> Update(int id, InputEventViewModel incomeEvent)
         {
-            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Event existEvent = await _context.Events.FindAsync(id);
 
             if (existEvent == null || existEvent.IsDeleted)
@@ -171,7 +171,7 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
-            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             if (requestedUser == null)
                 return StatusCode(401, "user not founded");
 
@@ -192,7 +192,7 @@ namespace ArsamBackend.Controllers
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {
-            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             if (requestedUser == null)
                 return StatusCode(401, "user not founded");
 
@@ -212,7 +212,7 @@ namespace ArsamBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<List<OutputTaskViewModel>>> GetTasks(int id)
         {
-            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             if (requestedUser == null)
                 return StatusCode(401, "user not founded");
 
@@ -229,6 +229,14 @@ namespace ArsamBackend.Controllers
                 result.Add(new OutputTaskViewModel(task));
 
             return result;
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<ActionResult<ICollection<Event>>> Filter(FilterEventsViewModel model)
+        {
+            var FilteredEvents = await _eventService.FilterEvents(model);
+            return Ok(FilteredEvents);
         }
 
     }

@@ -38,7 +38,7 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(InputTaskViewModel incomeTask)
         {
-            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Event taskEvent = await _context.Events.FindAsync(incomeTask.EventId);
 
             if (taskEvent == null)
@@ -67,7 +67,7 @@ namespace ArsamBackend.Controllers
         [HttpPut]
         public async Task<ActionResult> Update(int id, InputTaskViewModel incomeTask)
         {
-            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)
@@ -95,7 +95,7 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
-            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)
@@ -121,7 +121,7 @@ namespace ArsamBackend.Controllers
         [HttpPut]
         public async Task<ActionResult> AssignMember(int id, string memberEmail)
         {
-            AppUser requestedUser = await JWTokenHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Task existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)
