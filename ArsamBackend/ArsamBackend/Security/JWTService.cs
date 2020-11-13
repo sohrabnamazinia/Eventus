@@ -21,12 +21,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ArsamBackend.Security
 {
-    public class JWTokenHandler : IJWTHandler
+    public class JWTService : IJWTService
     {
 
         private readonly IConfiguration _config;
 
-        public JWTokenHandler(IConfiguration config)
+        public JWTService(IConfiguration config)
         {
             this._config = config;
         }

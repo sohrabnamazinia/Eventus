@@ -22,7 +22,7 @@ namespace Eventus.UnitTest.TestUtilities
         public Mock<ILogger<AccountController>> mockLogger = new Mock<ILogger<AccountController>>();
         public Mock<IDataProtector> mockDataProtector = new Mock<IDataProtector>();
         public Mock<IDataProtectionProvider> mockDPProvider = new Mock<IDataProtectionProvider>();
-        public Mock<IJWTHandler> mockJWTHandler = new Mock<IJWTHandler>();
+        public Mock<IJWTService> mockJWTHandler = new Mock<IJWTService>();
         public Mock<DataProtectionPurposeStrings> mockDPPurposeStrings = new Mock<DataProtectionPurposeStrings>();
         public Mock<HttpRequest> mockRequest = new Mock<HttpRequest>();
         public Mock<HttpContext> mockContext = new Mock<HttpContext>();
