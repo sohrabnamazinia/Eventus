@@ -68,7 +68,7 @@ namespace ArsamBackend.ViewModels
             EndDate = createdEvent.EndDate;
             IsLimitedMember = createdEvent.IsLimitedMember;
             MaximumNumberOfMembers = createdEvent.MaximumNumberOfMembers;
-            EventMembers = createdEvent.EventMembers;
+            EventMembers = createdEvent.EventMembers.Select(x => new OutputAppUserViewModel(x)).ToList();
             Creator = new OutputAppUserViewModel(createdEvent.Creator);
             ImagesPath = createdEvent.Images.Select(x => Path.GetFullPath(Constants.EventImagesPath) + x.FileName).ToList();
             Categories = ConvertCategoriesToList(createdEvent.Categories);
@@ -101,7 +101,7 @@ namespace ArsamBackend.ViewModels
 
         public int MaximumNumberOfMembers { get; set; }
 
-        public List<AppUser> EventMembers { get; set; }
+        public List<OutputAppUserViewModel> EventMembers { get; set; }
 
         public List<string> ImagesPath { get; set; }
 
@@ -123,7 +123,7 @@ namespace ArsamBackend.ViewModels
             EndDate = createdEvent.EndDate;
             IsLimitedMember = createdEvent.IsLimitedMember;
             MaximumNumberOfMembers = createdEvent.MaximumNumberOfMembers;
-            EventMembers = createdEvent.EventMembers;
+            EventMembers = createdEvent.EventMembers.Select(x => new OutputAppUserViewModel(x)).ToList();
             Creator = new OutputAppUserViewModel(createdEvent.Creator);
             ImagesPath = createdEvent.Images.Select(x => Path.GetFullPath(Constants.EventImagesPath) + x.FileName).ToList();
             Categories = ConvertCategoriesToList(createdEvent.Categories);
@@ -153,7 +153,7 @@ namespace ArsamBackend.ViewModels
 
         public int MaximumNumberOfMembers { get; set; }
 
-        public List<AppUser> EventMembers { get; set; }
+        public List<OutputAppUserViewModel> EventMembers { get; set; }
 
         public FileStream Image { get; set; }
 

@@ -217,6 +217,34 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [HttpPut]
+        public async Task<ActionResult> JoinMember(int id, string memberEmail)
+        {
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            Event existEvent = await _context.Events.FindAsync(id);
+
+            if (existEvent == null || existEvent.IsDeleted)
+                return StatusCode(404, "event not found");
+
+            if (existEvent.Creator != requestedUser)
+                return StatusCode(403, "access denied");
+
+            var member = await _context.Users.SingleOrDefaultAsync(c => c.Email == memberEmail);
+            if (!existEvent.EventMembers.Contains(member))
+            {
+                var membersList = existEvent.EventMembers.ToList();
+                membersList.Add(member);
+                existEvent.EventMembers = membersList;
+
+                await _context.SaveChangesAsync();
+
+                var result = new OutputEventViewModel(existEvent);
+                return Ok(result);
+            }
+
+            return BadRequest("member is already assigned");
+        }
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<ICollection<Event>>> Filter(FilterEventsViewModel model)
         {

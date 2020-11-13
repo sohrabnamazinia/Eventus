@@ -155,5 +155,39 @@ namespace ArsamBackend.Controllers
 
             return BadRequest("member is already assigned");
         }
+
+        [Authorize]
+        [HttpDelete]
+        public async Task<ActionResult> DeleteAssignedMember(int id, string memberEmail)
+        {
+            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            Task existTask = await _context.Tasks.FindAsync(id);
+
+            if (existTask == null || existTask.IsDeleted)
+                return StatusCode(404, "task not found");
+
+            Event taskEvent = existTask.Event;
+
+            if (taskEvent == null)
+                return StatusCode(404, "event not found");
+
+            if (!(taskEvent.EventMembers.Contains(requestedUser) || requestedUser == taskEvent.Creator))
+                return StatusCode(403, "access denied");
+
+            var member = await _context.Users.SingleOrDefaultAsync(c => c.Email == memberEmail);
+            
+            if (!existTask.AssignedMembers.Contains(member))
+                return BadRequest("this user is not in the assignedMembers list");
+            
+            var assignedMembersList = existTask.AssignedMembers.ToList();
+            assignedMembersList.Remove(member);
+            existTask.AssignedMembers = assignedMembersList;
+
+            await _context.SaveChangesAsync();
+
+            var result = new OutputTaskViewModel(existTask);
+            return Ok(result);
+
+        }
     }
 }
