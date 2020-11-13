@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using ArsamBackend.Models;
 using ArsamBackend.Security;
+using ArsamBackend.Services;
 using ArsamBackend.Utilities;
 using ArsamBackend.ViewModels;
 using Microsoft.AspNetCore.Authentication;
@@ -26,11 +27,13 @@ namespace ArsamBackend.Controllers
     public class EventController : ControllerBase
     {
         private readonly ILogger<EventController> _logger;
+        private readonly IEventService _eventService;
         private readonly AppDbContext _context;
 
-        public EventController(AppDbContext context, ILogger<EventController> logger)
+        public EventController(AppDbContext context, ILogger<EventController> logger, IEventService eventService)
         {
             _logger = logger;
+            this._eventService = eventService;
             this._context = context;
         }
 
@@ -39,29 +42,10 @@ namespace ArsamBackend.Controllers
         public async Task<ActionResult> Create(InputEventViewModel incomeEvent)
         {
             AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-
-            Event newEvent = new Event()
-            {
-                Name = incomeEvent.Name,
-                IsProject = incomeEvent.IsProject,
-                Description = incomeEvent.Description,
-                IsPrivate = incomeEvent.IsPrivate,
-                Location = "",
-                StartDate = incomeEvent.StartDate,
-                EndDate = incomeEvent.EndDate,
-                IsLimitedMember = incomeEvent.IsLimitedMember,
-                MaximumNumberOfMembers = incomeEvent.MaximumNumberOfMembers,
-                EventMembers = new List<AppUser>(),
-                Creator = requestedUser,
-                IsDeleted = false,
-                Images = new List<Image>(),
-                Categories = InputEventViewModel.BitWiseOr(incomeEvent.Categories)
-            };
-
-            await _context.Events.AddAsync(newEvent);
-            await _context.SaveChangesAsync();
-
-            var result = new OutputEventViewModel(newEvent);
+           
+            Event createdEvent = await _eventService.CreateEvent(incomeEvent, requestedUser);
+           
+            var result = new OutputEventViewModel(createdEvent);
             return Ok(result);
         }
 
@@ -77,6 +61,7 @@ namespace ArsamBackend.Controllers
 
             var req = Request.Form.Files;
 
+            
             string path = Constants.EventImagesPath;
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
