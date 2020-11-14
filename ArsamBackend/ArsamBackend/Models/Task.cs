@@ -23,10 +23,11 @@ namespace ArsamBackend.Models
 
         [Required]
         public virtual Event Event { get; set; }
+        public int EventId { get; set; }
 
         public bool IsDeleted { get; set; }
 
-        public virtual List<AppUser> AssignedMembers { get; set; }
+        public virtual ICollection<AppUser> AssignedMembers { get; set; }
     }
 
     public enum Status

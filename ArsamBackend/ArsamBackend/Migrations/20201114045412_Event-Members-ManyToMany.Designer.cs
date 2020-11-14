@@ -4,14 +4,16 @@ using ArsamBackend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ArsamBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201114045412_Event-Members-ManyToMany")]
+    partial class EventMembersManyToMany
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -32,21 +34,6 @@ namespace ArsamBackend.Migrations
                     b.HasIndex("InEventsId");
 
                     b.ToTable("AppUserEvent");
-                });
-
-            modelBuilder.Entity("AppUserTask", b =>
-                {
-                    b.Property<string>("AssignedMembersId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("AssignedTasksId")
-                        .HasColumnType("int");
-
-                    b.HasKey("AssignedMembersId", "AssignedTasksId");
-
-                    b.HasIndex("AssignedTasksId");
-
-                    b.ToTable("AppUserTask");
                 });
 
             modelBuilder.Entity("ArsamBackend.Models.AppUser", b =>
@@ -94,6 +81,9 @@ namespace ArsamBackend.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("TaskId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -110,6 +100,8 @@ namespace ArsamBackend.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("TaskId");
 
                     b.ToTable("AspNetUsers");
                 });
@@ -364,19 +356,11 @@ namespace ArsamBackend.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("AppUserTask", b =>
+            modelBuilder.Entity("ArsamBackend.Models.AppUser", b =>
                 {
-                    b.HasOne("ArsamBackend.Models.AppUser", null)
-                        .WithMany()
-                        .HasForeignKey("AssignedMembersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("ArsamBackend.Models.Task", null)
-                        .WithMany()
-                        .HasForeignKey("AssignedTasksId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany("AssignedMembers")
+                        .HasForeignKey("TaskId");
                 });
 
             modelBuilder.Entity("ArsamBackend.Models.Event", b =>
@@ -471,6 +455,11 @@ namespace ArsamBackend.Migrations
                     b.Navigation("Images");
 
                     b.Navigation("Tasks");
+                });
+
+            modelBuilder.Entity("ArsamBackend.Models.Task", b =>
+                {
+                    b.Navigation("AssignedMembers");
                 });
 #pragma warning restore 612, 618
         }

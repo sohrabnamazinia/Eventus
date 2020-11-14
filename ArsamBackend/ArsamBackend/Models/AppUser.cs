@@ -9,6 +9,8 @@ namespace ArsamBackend.Models
 {
     public class AppUser : IdentityUser
     {
-       
+        public virtual ICollection<Event> CreatedEvents { get; set; }
+        public virtual ICollection<Event> InEvents { get; set; }
+        public virtual ICollection<Task> AssignedTasks { get; set; }
     }
 }
