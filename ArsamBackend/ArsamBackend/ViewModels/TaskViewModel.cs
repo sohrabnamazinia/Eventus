@@ -29,7 +29,7 @@ namespace ArsamBackend.ViewModels
         {
             Id = task.Id;
             Name = task.Name;
-            Status = (int)task.Status;
+            Status = task.Status.ToString();
             Order = task.Order;
             EventId = task.Event.Id;
             AssignedMembers = task.AssignedMembers.Select(x => new OutputAppUserViewModel(x)).ToList();
@@ -38,7 +38,7 @@ namespace ArsamBackend.ViewModels
 
         public string Name { get; set; }
 
-        public int Status { get; set; }
+        public string Status { get; set; }
 
         public int Order { get; set; }
 
