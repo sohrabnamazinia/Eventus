@@ -93,6 +93,7 @@ namespace ArsamBackend
             });
             services.AddScoped<IJWTService, JWTService>();
             services.AddScoped<IEventService, EventService>();
+            services.AddScoped<ITaskService, TaskService>();
             #endregion Services
             #region Db
             services.AddIdentity<AppUser, IdentityRole>(options => 

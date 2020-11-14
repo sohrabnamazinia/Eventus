@@ -205,7 +205,7 @@ namespace ArsamBackend.Controllers
             if (taskEvent == null || taskEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
 
-            var tasks = taskEvent.Tasks;
+            var tasks = taskEvent.Tasks.OrderBy(x => x.Order).ToList();
             if (tasks.Count == 0)
                 return NotFound("there is no task for this event");
 
@@ -230,6 +230,14 @@ namespace ArsamBackend.Controllers
                 return StatusCode(403, "access denied");
 
             var member = await _context.Users.SingleOrDefaultAsync(c => c.Email == memberEmail);
+
+            if (member == null)
+                return StatusCode(404, "Member not found");
+
+            if (existEvent.IsLimitedMember)
+                if (existEvent.EventMembers.Count() >= existEvent.MaximumNumberOfMembers)
+                    return BadRequest("Event is full");
+            
             if (!existEvent.EventMembers.Contains(member))
             {
                 var membersList = existEvent.EventMembers.ToList();
@@ -244,6 +252,7 @@ namespace ArsamBackend.Controllers
 
             return BadRequest("member is already assigned");
         }
+
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<ICollection<Event>>> Filter(FilterEventsViewModel model)

@@ -8,6 +8,7 @@ using System.Net.Mime;
 using System.Threading.Tasks;
 using ArsamBackend.Models;
 using ArsamBackend.Security;
+using ArsamBackend.Services;
 using ArsamBackend.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,8 +18,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using Task = ArsamBackend.Models.Task;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace ArsamBackend.Controllers
 {
     [Route("api/[controller]/[action]")]
@@ -26,11 +25,13 @@ namespace ArsamBackend.Controllers
     public class TaskController : ControllerBase
     {
         private readonly ILogger<TaskController> _logger;
+        private readonly ITaskService _taskService;
         private readonly AppDbContext _context;
 
-        public TaskController(AppDbContext context, ILogger<TaskController> logger)
+        public TaskController(AppDbContext context, ILogger<TaskController> logger, ITaskService taskService)
         {
             _logger = logger;
+            this._taskService = taskService;
             this._context = context;
         }
 
@@ -47,17 +48,7 @@ namespace ArsamBackend.Controllers
             if (requestedUser != taskEvent.Creator)
                 return StatusCode(403, "access denied");
 
-            Task newTask = new Task()
-            {
-                Name = incomeTask.Name,
-                Status = Status.Todo,
-                Order = incomeTask.Order,
-                Event = taskEvent,
-                IsDeleted = false,
-                AssignedMembers = new List<AppUser>()  
-            };
-            await _context.Tasks.AddAsync(newTask);
-            await _context.SaveChangesAsync();
+            Task newTask = await _taskService.CreateTask(incomeTask, taskEvent);
 
             var result = new OutputTaskViewModel(newTask);
             return Ok(result);

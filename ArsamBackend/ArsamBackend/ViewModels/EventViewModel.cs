@@ -28,7 +28,7 @@ namespace ArsamBackend.ViewModels
         public string Name { get; set; }
         
         [Required]
-        public bool IsProject { get; set; }//type of event ->project event & normal event
+        public bool IsProject { get; set; }
 
         public string Description { get; set; }
 
@@ -85,7 +85,7 @@ namespace ArsamBackend.ViewModels
         public string Name { get; set; }
         public int Id { get; set; }
         
-        public bool IsProject { get; set; }//type of event ->project event & normal event
+        public bool IsProject { get; set; }
 
         public string Description { get; set; }
 
