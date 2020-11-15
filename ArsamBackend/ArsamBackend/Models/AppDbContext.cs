@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using CodeFirstStoreFunctions;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -18,9 +19,11 @@ namespace ArsamBackend.Models
         public DbSet<Task> Tasks { get; set; }
         public DbSet<Image> Images { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(builder);
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Event>().HasOne<AppUser>(s => s.Creator).WithMany(x => x.CreatedEvents);
         }
+
     }
 }

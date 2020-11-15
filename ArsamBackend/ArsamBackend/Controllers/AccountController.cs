@@ -164,33 +164,31 @@ namespace ArsamBackend.Controllers
 
                     if (result.Succeeded)
                     {
-                        var Token = await userManager.GenerateEmailConfirmationTokenAsync(NewUser);
-                        var EncryptedId = protector.Protect(NewUser.Id);
-                        var ConfirmationLink = Url.Action(nameof(ConfirmEmail), "Account", new { id = EncryptedId, token = Token }, Request.Scheme);
-                        // TODO : Send email 
-                        _logger.Log(LogLevel.Warning, ConfirmationLink);
-                        return CreatedAtAction(nameof(Register), new { email = Email, token = Token });
+                        var EmailConfirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(NewUser);
+                        var confirmEmailResult = await userManager.ConfirmEmailAsync(NewUser, EmailConfirmationToken);
+                        if (confirmEmailResult.Succeeded)
+                        {
+                            _logger.Log(LogLevel.Warning, NewUser.Email + " : Logged in via google account, thus no email confirmation is required.");
+                            await signInManager.SignInAsync(NewUser, isPersistent: false);
+                            var jwt = _jWTHandler.GenerateToken(NewUser);
+                            return Ok(new { jwt });
+                        }
+                        foreach (var error in confirmEmailResult.Errors)
+                        {
+                            ModelState.AddModelError("Error", error.Description);
+                        }
+
                     }
                     foreach (var error in result.Errors)
                     {
                         ModelState.AddModelError("Error", error.Description);
                     }
                     return BadRequest(ModelState);
-                }   
-                else
-                {
-                    if (user.EmailConfirmed)
-                    {
-                        await signInManager.SignInAsync(user, isPersistent: false);
-                        var Token = _jWTHandler.GenerateToken(user);
-                        return Ok(new { Token });
-                    }
-
-                    else
-                    {
-                        return Unauthorized(new { Error = Constants.EmailConfirmationError });
-                    }
                 }
+
+                await signInManager.SignInAsync(user, isPersistent: false);
+                var Token = _jWTHandler.GenerateToken(user);
+                return Ok(new { Token });
             }
             catch (Exception e)
             {

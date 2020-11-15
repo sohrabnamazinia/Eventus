@@ -42,7 +42,7 @@ namespace ArsamBackend.Models
                 Creator = Creator,
                 IsDeleted = false,
                 Images = new List<Image>(),
-                Categories = InputEventViewModel.BitWiseOr(incomeEvent.Categories)
+                Categories = CategoryService.BitWiseOr(incomeEvent.Categories)
             };
 
             await _context.Events.AddAsync(newEvent);
@@ -51,16 +51,21 @@ namespace ArsamBackend.Models
             return newEvent;
         }
 
-        public async Task<ICollection<Event>> FilterEvents(FilterEventsViewModel model)
+        public async Task<ICollection<Event>> FilterEvents(FilterEventsViewModel model, PaginationParameters pagination)
         {
-            var events = _context.Events.Include(x => x.Images).Where(x =>
+            Category filteredCategories = (model.Categories == null) ? 0 : CategoryService.BitWiseOr(model.Categories);
+            var events = _context.Events.Where(x =>
             (model.Name == null || x.Name == model.Name) &&
             (model.IsPrivate == null || x.IsPrivate == model.IsPrivate) &&
             (model.MembersCountMin == null || x.EventMembers.Count() >= model.MembersCountMin) &&
             (model.MembersCountMax == null || x.EventMembers.Count() <= model.MembersCountMax) &&
             (model.DateMin == null || DateTime.Compare(x.StartDate, (DateTime)model.DateMin) >= 0) &&
-            (model.DateMax == null || DateTime.Compare(x.EndDate, (DateTime)model.DateMax) <= 0));
+            (model.DateMax == null || DateTime.Compare(x.EndDate, (DateTime)model.DateMax) <= 0) &&
+            (model.Categories == null || x.Categories.HasFlag(filteredCategories)))
+            .Skip((pagination.PageNumber - 1) * (pagination.PageSize)).Take(pagination.PageSize);
             return await events.ToListAsync();
         }
+
+
     }
 }

@@ -15,5 +15,6 @@ namespace ArsamBackend.ViewModels
         public bool? IsPrivate { get; set; }
         public int? MembersCountMin { get; set; }
         public int? MembersCountMax { get; set; }
+        public List<int>? Categories { get; set; }
     }
 }

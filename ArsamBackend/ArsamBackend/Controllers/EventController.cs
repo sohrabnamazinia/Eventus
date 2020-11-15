@@ -144,7 +144,7 @@ namespace ArsamBackend.Controllers
             existEvent.EndDate = incomeEvent.EndDate;
             existEvent.IsLimitedMember = incomeEvent.IsLimitedMember;
             existEvent.MaximumNumberOfMembers = incomeEvent.MaximumNumberOfMembers;
-            existEvent.Categories = InputEventViewModel.BitWiseOr(incomeEvent.Categories);
+            existEvent.Categories = CategoryService.BitWiseOr(incomeEvent.Categories);
 
             await _context.SaveChangesAsync();
 
@@ -193,28 +193,6 @@ namespace ArsamBackend.Controllers
             return Ok(result);
         }
 
-        [Authorize]
-        [HttpGet]
-        public async Task<ActionResult<List<OutputTaskViewModel>>> GetTasks(int id)
-        {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-            if (requestedUser == null)
-                return StatusCode(401, "user not founded");
-
-            Event taskEvent = await _context.Events.FindAsync(id);
-            if (taskEvent == null || taskEvent.IsDeleted)
-                return NotFound("no event found by this id: " + id);
-
-            var tasks = taskEvent.Tasks;
-            if (tasks.Count == 0)
-                return NotFound("there is no task for this event");
-
-            var result = new List<OutputTaskViewModel>();
-            foreach (var task in tasks)
-                result.Add(new OutputTaskViewModel(task));
-
-            return result;
-        }
 
         [Authorize]
         [HttpPut]
@@ -230,6 +208,14 @@ namespace ArsamBackend.Controllers
                 return StatusCode(403, "access denied");
 
             var member = await _context.Users.SingleOrDefaultAsync(c => c.Email == memberEmail);
+
+            if (member == null)
+                return StatusCode(404, "Member not found");
+
+            if (existEvent.IsLimitedMember)
+                if (existEvent.EventMembers.Count() >= existEvent.MaximumNumberOfMembers)
+                    return BadRequest("Event is full");
+            
             if (!existEvent.EventMembers.Contains(member))
             {
                 var membersList = existEvent.EventMembers.ToList();
@@ -244,13 +230,18 @@ namespace ArsamBackend.Controllers
 
             return BadRequest("member is already assigned");
         }
+
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult<ICollection<Event>>> Filter(FilterEventsViewModel model)
+        public async Task<ActionResult<ICollection<Event>>> Filter(FilterEventsViewModel model, [FromQuery] PaginationParameters pagination)
         {
-            var FilteredEvents = await _eventService.FilterEvents(model);
-            return Ok(FilteredEvents);
+            var FilteredEvents = await _eventService.FilterEvents(model, pagination);
+            List<OutputEventViewModel> outModels = new List<OutputEventViewModel>();
+            foreach (var ev in FilteredEvents) outModels.Add(new OutputEventViewModel(ev));
+            return Ok(outModels);
         }
+
+        
 
     }
 }
