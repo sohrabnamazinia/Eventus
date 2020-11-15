@@ -193,28 +193,6 @@ namespace ArsamBackend.Controllers
             return Ok(result);
         }
 
-        [Authorize]
-        [HttpGet]
-        public async Task<ActionResult<List<OutputTaskViewModel>>> GetTasks(int id)
-        {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-            if (requestedUser == null)
-                return StatusCode(401, "user not founded");
-
-            Event taskEvent = await _context.Events.FindAsync(id);
-            if (taskEvent == null || taskEvent.IsDeleted)
-                return NotFound("no event found by this id: " + id);
-
-            var tasks = taskEvent.Tasks.OrderBy(x => x.Order).ToList();
-            if (tasks.Count == 0)
-                return NotFound("there is no task for this event");
-
-            var result = new List<OutputTaskViewModel>();
-            foreach (var task in tasks)
-                result.Add(new OutputTaskViewModel(task));
-
-            return result;
-        }
 
         [Authorize]
         [HttpPut]

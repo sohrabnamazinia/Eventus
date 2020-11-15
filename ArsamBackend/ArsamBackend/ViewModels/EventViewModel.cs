@@ -64,6 +64,7 @@ namespace ArsamBackend.ViewModels
             Creator = new OutputAppUserViewModel(createdEvent.Creator);
             ImagesPath = createdEvent.Images.Select(x => Path.GetFullPath(Constants.EventImagesPath) + x.FileName).ToList();
             Categories = CategoryService.ConvertCategoriesToList(createdEvent.Categories);
+            Tasks = createdEvent.Tasks.OrderBy(x => x.Order).Select(x => new OutputTaskViewModel(x)).ToList();
         }
        
         public string Name { get; set; }
@@ -93,6 +94,8 @@ namespace ArsamBackend.ViewModels
 
         public List<int> Categories { get; set; }
 
+        public List<OutputTaskViewModel> Tasks { get; set; }
+
     }
 
     public class Output2EventViewModel
@@ -111,6 +114,7 @@ namespace ArsamBackend.ViewModels
             Creator = new OutputAppUserViewModel(createdEvent.Creator);
             ImagesPath = createdEvent.Images.Select(x => Path.GetFullPath(Constants.EventImagesPath) + x.FileName).ToList();
             Categories = ConvertCategoriesToList(createdEvent.Categories);
+            Tasks = createdEvent.Tasks.OrderBy(x => x.Order).Select(x => new OutputTaskViewModel(x)).ToList();
         }
         private List<int> ConvertCategoriesToList(Category category)
         {
@@ -146,6 +150,8 @@ namespace ArsamBackend.ViewModels
         public List<string> ImagesPath { get; set; }
 
         public List<int> Categories { get; set; }
+
+        public List<OutputTaskViewModel> Tasks { get; set; }
 
     }
 }
