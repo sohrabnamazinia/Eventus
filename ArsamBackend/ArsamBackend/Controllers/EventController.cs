@@ -144,7 +144,7 @@ namespace ArsamBackend.Controllers
             existEvent.EndDate = incomeEvent.EndDate;
             existEvent.IsLimitedMember = incomeEvent.IsLimitedMember;
             existEvent.MaximumNumberOfMembers = incomeEvent.MaximumNumberOfMembers;
-            existEvent.Categories = InputEventViewModel.BitWiseOr(incomeEvent.Categories);
+            existEvent.Categories = CategoryService.BitWiseOr(incomeEvent.Categories);
 
             await _context.SaveChangesAsync();
 
@@ -255,11 +255,15 @@ namespace ArsamBackend.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult<ICollection<Event>>> Filter(FilterEventsViewModel model)
+        public async Task<ActionResult<ICollection<Event>>> Filter(FilterEventsViewModel model, [FromQuery] PaginationParameters pagination)
         {
-            var FilteredEvents = await _eventService.FilterEvents(model);
-            return Ok(FilteredEvents);
+            var FilteredEvents = await _eventService.FilterEvents(model, pagination);
+            List<OutputEventViewModel> outModels = new List<OutputEventViewModel>();
+            foreach (var ev in FilteredEvents) outModels.Add(new OutputEventViewModel(ev));
+            return Ok(outModels);
         }
+
+        
 
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using CodeFirstStoreFunctions;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -22,7 +23,7 @@ namespace ArsamBackend.Models
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<Event>().HasOne<AppUser>(s => s.Creator).WithMany(x => x.CreatedEvents);
-            //modelBuilder
         }
+
     }
 }

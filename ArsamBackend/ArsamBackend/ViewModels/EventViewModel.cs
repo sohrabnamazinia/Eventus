@@ -15,14 +15,6 @@ namespace ArsamBackend.ViewModels
 
     public class InputEventViewModel
     {
-        public static Category BitWiseOr(List<int> categories)
-        {
-            Category result = 0;
-            foreach (var i in categories)
-                result |= (Category)i;
-
-            return result;
-        }
 
         [Required]
         public string Name { get; set; }
@@ -71,17 +63,9 @@ namespace ArsamBackend.ViewModels
             EventMembers = createdEvent.EventMembers.Select(x => new OutputAppUserViewModel(x)).ToList();
             Creator = new OutputAppUserViewModel(createdEvent.Creator);
             ImagesPath = createdEvent.Images.Select(x => Path.GetFullPath(Constants.EventImagesPath) + x.FileName).ToList();
-            Categories = ConvertCategoriesToList(createdEvent.Categories);
+            Categories = CategoryService.ConvertCategoriesToList(createdEvent.Categories);
         }
-        private List<int> ConvertCategoriesToList(Category category)
-        {
-            List<int> result = new List<int>();
-            foreach (Category cat in Enum.GetValues(typeof(Category)))
-                if ((category & cat) != 0)
-                    result.Add((int)cat);
-
-            return result;
-        }
+       
         public string Name { get; set; }
         public int Id { get; set; }
         
