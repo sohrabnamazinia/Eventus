@@ -89,8 +89,8 @@ namespace ArsamBackend.Controllers
                 else
                     return BadRequest("image not found");
             }
-
-            return Ok("images added");
+            var result = new OutputEventViewModel(eve);
+            return Ok(result);
 
         }
 

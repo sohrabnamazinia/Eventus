@@ -62,7 +62,7 @@ namespace ArsamBackend.ViewModels
             MaximumNumberOfMembers = createdEvent.MaximumNumberOfMembers;
             EventMembers = createdEvent.EventMembers.Select(x => new OutputAppUserViewModel(x)).ToList();
             Creator = new OutputAppUserViewModel(createdEvent.Creator);
-            ImagesPath = createdEvent.Images.Select(x => Path.GetFullPath(Constants.EventImagesPath) + x.FileName).ToList();
+            Images = createdEvent.Images.Select(x => Convert.ToBase64String(File.ReadAllBytes(Path.GetFullPath(Constants.EventImagesPath) + x.FileName))).ToList();
             Categories = CategoryService.ConvertCategoriesToList(createdEvent.Categories);
             Tasks = createdEvent.Tasks.OrderBy(x => x.Order).Select(x => new OutputTaskViewModel(x)).ToList();
         }
@@ -88,7 +88,7 @@ namespace ArsamBackend.ViewModels
 
         public List<OutputAppUserViewModel> EventMembers { get; set; }
 
-        public List<string> ImagesPath { get; set; }
+        public List<string> Images { get; set; }
 
         public OutputAppUserViewModel Creator { get; set; }
 
@@ -112,7 +112,7 @@ namespace ArsamBackend.ViewModels
             MaximumNumberOfMembers = createdEvent.MaximumNumberOfMembers;
             EventMembers = createdEvent.EventMembers.Select(x => new OutputAppUserViewModel(x)).ToList();
             Creator = new OutputAppUserViewModel(createdEvent.Creator);
-            ImagesPath = createdEvent.Images.Select(x => Path.GetFullPath(Constants.EventImagesPath) + x.FileName).ToList();
+            Images = createdEvent.Images.Select(x => Convert.ToBase64String(File.ReadAllBytes(Path.GetFullPath(Constants.EventImagesPath) + x.FileName))).ToList();
             Categories = ConvertCategoriesToList(createdEvent.Categories);
             Tasks = createdEvent.Tasks.OrderBy(x => x.Order).Select(x => new OutputTaskViewModel(x)).ToList();
         }
@@ -147,7 +147,7 @@ namespace ArsamBackend.ViewModels
 
         public OutputAppUserViewModel Creator { get; set; }
 
-        public List<string> ImagesPath { get; set; }
+        public List<string> Images { get; set; }
 
         public List<int> Categories { get; set; }
 
