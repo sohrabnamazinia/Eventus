@@ -42,7 +42,8 @@ namespace ArsamBackend.Models
                 Creator = Creator,
                 IsDeleted = false,
                 Images = new List<Image>(),
-                Categories = CategoryService.BitWiseOr(incomeEvent.Categories)
+                Categories = CategoryService.BitWiseOr(incomeEvent.Categories),
+                Tasks = new List<Task>()
             };
 
             await _context.Events.AddAsync(newEvent);
