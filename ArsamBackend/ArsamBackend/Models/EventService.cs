@@ -58,6 +58,7 @@ namespace ArsamBackend.Models
             var events = _context.Events.Where(x =>
             (model.Name == null || x.Name == model.Name) &&
             (model.IsPrivate == null || x.IsPrivate == model.IsPrivate) &&
+            (model.IsProject == null || x.IsProject == model.IsProject) &&
             (model.MembersCountMin == null || x.EventMembers.Count() >= model.MembersCountMin) &&
             (model.MembersCountMax == null || x.EventMembers.Count() <= model.MembersCountMax) &&
             (model.DateMin == null || DateTime.Compare(x.StartDate, (DateTime)model.DateMin) >= 0) &&
