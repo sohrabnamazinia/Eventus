@@ -70,6 +70,9 @@ namespace ArsamBackend.Controllers
             {
                 if (file != null && file.Length > 0)
                 {
+                    if (!file.ContentType.ToLower().Contains("image"))
+                        return StatusCode(415, "Unsupported Media Type, only image types can be added to Events");
+                    
                     var fileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(file.FileName);
                     await using (var fileStream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
                     {
