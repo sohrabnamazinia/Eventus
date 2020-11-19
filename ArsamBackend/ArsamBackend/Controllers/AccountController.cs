@@ -32,15 +32,18 @@ namespace ArsamBackend.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
+        private readonly AppDbContext _context;
         private readonly UserManager<AppUser> userManager;
         private readonly SignInManager<AppUser> signInManager;
         private readonly ILogger<AccountController> _logger;
         public readonly JwtSecurityTokenHandler handler;
         private readonly IDataProtector protector;
         private readonly IJWTService _jWTHandler;
+        
 
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler)
+        public AccountController(AppDbContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler)
         {
+            this._context = context;
             this.userManager = userManager;
             this.signInManager = signInManager;
             this._logger = logger;
@@ -201,6 +204,15 @@ namespace ArsamBackend.Controllers
         public async Task<IActionResult> Logout()
         {
             await signInManager.SignOutAsync();
+            return Ok();
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> SetName(string FirstName, string LastName, string Bio)
+        {
+            AppUser user = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+
             return Ok();
         }
 

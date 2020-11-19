@@ -28,12 +28,14 @@ namespace ArsamBackend.Controllers
     {
         private readonly ILogger<EventController> _logger;
         private readonly IEventService _eventService;
+        private readonly IJWTService jwtHandler;
         private readonly AppDbContext _context;
 
-        public EventController(AppDbContext context, ILogger<EventController> logger, IEventService eventService)
+        public EventController(IJWTService jwtHandler, AppDbContext context, ILogger<EventController> logger, IEventService eventService)
         {
             _logger = logger;
             this._eventService = eventService;
+            this.jwtHandler = jwtHandler;
             this._context = context;
         }
 
@@ -41,7 +43,7 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(InputEventViewModel incomeEvent)
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
            
             Event createdEvent = await _eventService.CreateEvent(incomeEvent, requestedUser);
            
@@ -53,7 +55,7 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> AddImage(int eventId)
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Event eve = await _context.Events.FindAsync(eventId);
 
             if (requestedUser != eve.Creator)
@@ -101,7 +103,7 @@ namespace ArsamBackend.Controllers
         [HttpGet]
         public async Task<ActionResult> Get(int id)
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
 
             Event resultEvent = await _context.Events.FindAsync(id);
 
@@ -130,7 +132,7 @@ namespace ArsamBackend.Controllers
         [HttpPut]
         public async Task<ActionResult> Update(int id, InputEventViewModel incomeEvent)
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Event existEvent = await _context.Events.FindAsync(id);
 
             if (existEvent == null || existEvent.IsDeleted)
@@ -159,7 +161,7 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             if (requestedUser == null)
                 return StatusCode(401, "user not founded");
 
@@ -180,7 +182,7 @@ namespace ArsamBackend.Controllers
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             if (requestedUser == null)
                 return StatusCode(401, "user not founded");
 
@@ -201,7 +203,7 @@ namespace ArsamBackend.Controllers
         [HttpPut]
         public async Task<ActionResult> JoinMember(int id, string memberEmail)
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Event existEvent = await _context.Events.FindAsync(id);
 
             if (existEvent == null || existEvent.IsDeleted)
