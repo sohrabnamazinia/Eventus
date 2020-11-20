@@ -1,10 +1,12 @@
 ﻿using ArsamBackend.Controllers;
+using ArsamBackend.Models;
 using ArsamBackend.Services;
 using ArsamBackend.Utilities;
 using Eventus.UnitTest.MockedServices;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Nancy.Json;
@@ -28,6 +30,8 @@ namespace Eventus.UnitTest.TestUtilities
         public Mock<HttpContext> mockContext = new Mock<HttpContext>();
         public Mock<IUrlHelper> mockUrl = new Mock<IUrlHelper>();
         public JavaScriptSerializer serializer = new JavaScriptSerializer();
+        public Mock<IJWTService> jwtService = new Mock<IJWTService>();
+        public AppDbContext context = new AppDbContext(new DbContextOptions<AppDbContext>());
         #endregion mock
     }
 }

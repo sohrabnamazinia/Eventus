@@ -61,19 +61,20 @@ namespace ArsamBackend.Security
             {
                 token = headerValue.Parameter;
             }
-            var userEmail = GetClaim(token, "nameid");
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var securityToken = tokenHandler.ReadToken(token) as JwtSecurityToken;
+            var userEmail = securityToken.Claims.First(claim => claim.Type == "nameid").Value;
             return userEmail;
         }
-        public static async Task<AppUser> FindUserByTokenAsync(string authorization, AppDbContext context)
+        public async Task<AppUser> FindUserByTokenAsync(string authorization, AppDbContext context)
         {
             var userEmail = FindEmailByToken(authorization);
             return await context.Users.SingleOrDefaultAsync(x => x.Email == userEmail);
         }
 
-
         #region utilities
 
-        public static string GetRawJTW(string jwt)
+        public string GetRawJTW(string jwt)
         {
             var token = string.Empty;
             if (AuthenticationHeaderValue.TryParse(jwt, out var headerValue))
@@ -103,7 +104,7 @@ namespace ArsamBackend.Security
             return true;
         }
 
-        public static string GetClaim(string token, string claimType)
+        public string GetClaim(string token, string claimType)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var securityToken = tokenHandler.ReadToken(token) as JwtSecurityToken;

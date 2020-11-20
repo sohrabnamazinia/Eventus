@@ -26,12 +26,14 @@ namespace ArsamBackend.Controllers
     {
         private readonly ILogger<TaskController> _logger;
         private readonly ITaskService _taskService;
+        private readonly IJWTService jwtHandler;
         private readonly AppDbContext _context;
 
-        public TaskController(AppDbContext context, ILogger<TaskController> logger, ITaskService taskService)
+        public TaskController(IJWTService jwtHandler, AppDbContext context, ILogger<TaskController> logger, ITaskService taskService)
         {
             _logger = logger;
             this._taskService = taskService;
+            this.jwtHandler = jwtHandler;
             this._context = context;
         }
 
@@ -39,7 +41,7 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(InputTaskViewModel incomeTask)
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Event taskEvent = await _context.Events.FindAsync(incomeTask.EventId);
 
             if (taskEvent == null)
@@ -58,7 +60,7 @@ namespace ArsamBackend.Controllers
         [HttpPut]
         public async Task<ActionResult> Update(int id, InputTaskViewModel incomeTask)
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)
@@ -86,7 +88,7 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)
@@ -112,7 +114,7 @@ namespace ArsamBackend.Controllers
         [HttpPut]
         public async Task<ActionResult> AssignMember(int id, string memberEmail)
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Task existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)
@@ -151,7 +153,7 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> DeleteAssignedMember(int id, string memberEmail)
         {
-            AppUser requestedUser = await JWTService.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Task existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)

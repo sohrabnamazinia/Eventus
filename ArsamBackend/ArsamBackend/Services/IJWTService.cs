@@ -9,5 +9,10 @@ namespace ArsamBackend.Services
     public interface IJWTService
     {
         public string GenerateToken(AppUser user);
+        public string GetRawJTW(string jwt);
+        public string GetClaim(string token, string claimType);
+        public Task<AppUser> FindUserByTokenAsync(string authorization, AppDbContext context);
+
+
     }
 }
