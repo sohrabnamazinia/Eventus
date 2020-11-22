@@ -49,4 +49,11 @@ namespace ArsamBackend.Models
 
         public virtual Category Categories { get; set; }
     }
+
+    public enum Role
+    {
+        Creator,
+        Admin,
+        Member
+    }
 }

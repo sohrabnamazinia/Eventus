@@ -44,9 +44,9 @@ namespace ArsamBackend.Controllers
         public async Task<ActionResult> Create(InputEventViewModel incomeEvent)
         {
             AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-           
+
             Event createdEvent = await _eventService.CreateEvent(incomeEvent, requestedUser);
-           
+
             var result = new OutputEventViewModel(createdEvent);
             return Ok(result);
         }
@@ -63,7 +63,7 @@ namespace ArsamBackend.Controllers
 
             var req = Request.Form.Files;
 
-            
+
             string path = Constants.EventImagesPath;
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
@@ -74,7 +74,7 @@ namespace ArsamBackend.Controllers
                 {
                     if (!file.ContentType.ToLower().Contains("image"))
                         return StatusCode(415, "Unsupported Media Type, only image types can be added to Events");
-                    
+
                     var fileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(file.FileName);
                     await using (var fileStream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
                     {
@@ -85,7 +85,7 @@ namespace ArsamBackend.Controllers
                     {
                         EventId = eventId,
                         Event = eve,
-                        FileName =  fileName,
+                        FileName = fileName,
                         ContentType = file.ContentType
                     };
                     eve.Images.Add(image);
@@ -103,29 +103,26 @@ namespace ArsamBackend.Controllers
         [HttpGet]
         public async Task<ActionResult> Get(int id)
         {
-            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-
             Event resultEvent = await _context.Events.FindAsync(id);
 
             if (resultEvent == null || resultEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
 
-            if (resultEvent.Creator == requestedUser) //creator
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], id);
+
+            OutputEventViewModel result;
+
+            if (userRole == Role.Admin || userRole == Role.Member)
             {
-                var resultForCreator = new OutputEventViewModel(resultEvent);
-                return Ok(resultForCreator);
-            }
-            else if (resultEvent.EventMembers.Contains(requestedUser)) //members
-            {
-                var resultForMembers = new Output2EventViewModel(resultEvent);
-                return Ok(resultForMembers);
+                result = new OutputEventViewModel(resultEvent, userRole);
+                return Ok(result);
             }
 
             if (resultEvent.IsPrivate)
-                return StatusCode(403, "access denied");
+                return StatusCode(403, "access denied, this event is private");
 
-            var resultForAll = new Output2EventViewModel(resultEvent);
-            return Ok(resultForAll);
+            result = new OutputEventViewModel(resultEvent);
+            return Ok(result);
         }
 
         [Authorize]
@@ -201,40 +198,78 @@ namespace ArsamBackend.Controllers
 
         [Authorize]
         [HttpPut]
-        public async Task<ActionResult> JoinMember(int id, string memberEmail)
+        public async Task<ActionResult> PromoteMember(int id, string memberEmail)
         {
-            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], id);
+            if (userRole != Role.Admin)
+                return StatusCode(403, "access denied, you are not an admin");
+
+            AppUser member = await _context.Users.SingleOrDefaultAsync(c => c.Email == memberEmail);
+            if (member == null)
+                return StatusCode(404, "user with this email not found");
+
             Event existEvent = await _context.Events.FindAsync(id);
 
             if (existEvent == null || existEvent.IsDeleted)
                 return StatusCode(404, "event not found");
 
-            if (existEvent.Creator != requestedUser)
-                return StatusCode(403, "access denied");
-
-            var member = await _context.Users.SingleOrDefaultAsync(c => c.Email == memberEmail);
-
-            if (member == null)
-                return StatusCode(404, "Member not found");
-
             if (existEvent.IsLimitedMember)
                 if (existEvent.EventMembers.Count() >= existEvent.MaximumNumberOfMembers)
                     return BadRequest("Event is full");
-            
-            if (!existEvent.EventMembers.Contains(member))
+
+            var userRoleInDb = await _context.EventClaim.FindAsync(member.Id, existEvent.Id);
+            if (userRoleInDb == null)
             {
+                var memberRoleClaim = new EventClaim() { AppUser = member, AppUserId = member.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member };
+                await _context.EventClaim.AddAsync(memberRoleClaim);
                 var membersList = existEvent.EventMembers.ToList();
                 membersList.Add(member);
                 existEvent.EventMembers = membersList;
-
                 await _context.SaveChangesAsync();
-
-                var result = new OutputEventViewModel(existEvent);
+                var result = new OutputEventViewModel(existEvent, userRole);
                 return Ok(result);
             }
+            else if (userRoleInDb.Role == Role.Admin)
+            {
+                userRoleInDb.Role = Role.Member;
+                await _context.SaveChangesAsync();
+                return Ok("this admin demoted to member");
+            }
+            else if (userRoleInDb.Role == Role.Member)
+            {
+                return BadRequest("member is already assigned");
+            }
 
-            return BadRequest("member is already assigned");
+            return BadRequest();
         }
+
+        [Authorize]
+        [HttpPut]
+        public async Task<ActionResult> PromoteAdmin(int id, string memberEmail)
+        {
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], id);
+            if (userRole != Role.Admin)
+                return StatusCode(403, "access denied, you are not an admin");
+
+            AppUser member = await _context.Users.SingleOrDefaultAsync(c => c.Email == memberEmail);
+            if (member == null)
+                return StatusCode(404, "Member not found");
+
+            Event existEvent = await _context.Events.FindAsync(id);
+
+            if (existEvent == null || existEvent.IsDeleted)
+                return StatusCode(404, "event not found");
+
+            if (!existEvent.EventMembers.Contains(member))
+                return StatusCode(403, "access denied, only members can be promote to admin");
+
+            var userRoleInDb = await _context.EventClaim.FindAsync(member.Id, existEvent.Id);
+            userRoleInDb.Role = Role.Admin;
+            await _context.SaveChangesAsync();
+
+            return Ok("member promoted");
+        }
+
 
         [Authorize]
         [HttpPost]
@@ -246,7 +281,7 @@ namespace ArsamBackend.Controllers
             return Ok(outModels);
         }
 
-        
+
 
     }
 }

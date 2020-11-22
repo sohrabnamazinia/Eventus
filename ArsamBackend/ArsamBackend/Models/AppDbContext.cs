@@ -18,11 +18,13 @@ namespace ArsamBackend.Models
         public DbSet<Event> Events { get; set; }
         public DbSet<Task> Tasks { get; set; }
         public DbSet<Image> Images { get; set; }
+        public DbSet<EventClaim> EventClaim { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<Event>().HasOne<AppUser>(s => s.Creator).WithMany(x => x.CreatedEvents);
+            modelBuilder.Entity<EventClaim>().HasKey(o => new {o.AppUserId, o.EventId});
         }
 
     }

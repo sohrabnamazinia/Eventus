@@ -25,7 +25,7 @@ namespace ArsamBackend.Models
         }
 
 
-        public async Task<Event> CreateEvent(InputEventViewModel incomeEvent, AppUser Creator)
+        public async Task<Event> CreateEvent(InputEventViewModel incomeEvent, AppUser creator)
         {
             Event newEvent = new Event()
             {
@@ -39,14 +39,15 @@ namespace ArsamBackend.Models
                 IsLimitedMember = incomeEvent.IsLimitedMember,
                 MaximumNumberOfMembers = incomeEvent.MaximumNumberOfMembers,
                 EventMembers = new List<AppUser>(),
-                Creator = Creator,
+                Creator = creator,
                 IsDeleted = false,
                 Images = new List<Image>(),
                 Categories = CategoryService.BitWiseOr(incomeEvent.Categories),
                 Tasks = new List<Task>()
             };
-
+            var adminRoleClaim = new EventClaim() { AppUser = creator, AppUserId = creator.Id, Event = newEvent, EventId = newEvent.Id, Role = Role.Admin };
             await _context.Events.AddAsync(newEvent);
+            await _context.EventClaim.AddAsync(adminRoleClaim);
             await _context.SaveChangesAsync();
 
             return newEvent;

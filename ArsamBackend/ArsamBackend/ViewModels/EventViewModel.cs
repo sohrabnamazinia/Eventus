@@ -48,7 +48,7 @@ namespace ArsamBackend.ViewModels
 
     public class OutputEventViewModel
     {
-        public OutputEventViewModel(Event createdEvent)
+        public OutputEventViewModel(Event createdEvent, Role? userRole = null)
         {
             Name = createdEvent.Name;
             Description = createdEvent.Description;
@@ -65,6 +65,7 @@ namespace ArsamBackend.ViewModels
             Images = createdEvent.Images.Select(x => Convert.ToBase64String(File.ReadAllBytes(Path.GetFullPath(Constants.EventImagesPath) + x.FileName))).ToList();
             Categories = CategoryService.ConvertCategoriesToList(createdEvent.Categories);
             Tasks = createdEvent.Tasks.OrderBy(x => x.Order).Select(x => new OutputTaskViewModel(x)).ToList();
+            MyRole = userRole?.ToString();
         }
        
         public string Name { get; set; }
@@ -96,6 +97,7 @@ namespace ArsamBackend.ViewModels
 
         public List<OutputTaskViewModel> Tasks { get; set; }
 
+        public string MyRole { get; set; }
     }
 
     public class Output2EventViewModel
@@ -142,8 +144,6 @@ namespace ArsamBackend.ViewModels
         public int MaximumNumberOfMembers { get; set; }
 
         public List<OutputAppUserViewModel> EventMembers { get; set; }
-
-        public FileStream Image { get; set; }
 
         public OutputAppUserViewModel Creator { get; set; }
 
