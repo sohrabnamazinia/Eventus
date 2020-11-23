@@ -41,13 +41,13 @@ namespace ArsamBackend.Models
                 EventMembers = new List<AppUser>(),
                 Creator = creator,
                 IsDeleted = false,
-                Images = new List<Image>(),
+                Images = new List<EventImage>(),
                 Categories = CategoryService.BitWiseOr(incomeEvent.Categories),
                 Tasks = new List<Task>()
             };
-            var adminRoleClaim = new EventClaim() { AppUser = creator, AppUserId = creator.Id, Event = newEvent, EventId = newEvent.Id, Role = Role.Admin };
+            var adminRoleClaim = new EventUserRole() { AppUser = creator, AppUserId = creator.Id, Event = newEvent, EventId = newEvent.Id, Role = Role.Admin };
             await _context.Events.AddAsync(newEvent);
-            await _context.EventClaim.AddAsync(adminRoleClaim);
+            await _context.EventUserRole.AddAsync(adminRoleClaim);
             await _context.SaveChangesAsync();
 
             return newEvent;

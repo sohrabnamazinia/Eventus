@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ArsamBackend.Models
 {
-    public class Image
+    public class EventImage
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

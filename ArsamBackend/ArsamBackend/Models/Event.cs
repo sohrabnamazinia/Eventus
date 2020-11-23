@@ -36,7 +36,7 @@ namespace ArsamBackend.Models
         [Required]
         public DateTime EndDate { get; set; }
 
-        public virtual ICollection<Image> Images { get; set; }
+        public virtual ICollection<EventImage> Images { get; set; }
 
         [Required]
         public bool IsLimitedMember { get; set; }

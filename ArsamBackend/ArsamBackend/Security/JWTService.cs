@@ -44,7 +44,9 @@ namespace ArsamBackend.Security
             };
 
             foreach (var role in user.Roles)
-                claims.Add(new Claim( role.EventId.ToString(),((int)role.Role).ToString()));
+                if (role.IsAccepted)
+                    claims.Add(new Claim(role.EventId.ToString(), ((int) role.Role).ToString()));
+            
 
             var TokenHandler = new JwtSecurityTokenHandler();
             var TokenDescriptor = new SecurityTokenDescriptor()
