@@ -249,13 +249,15 @@ namespace ArsamBackend.Controllers
                     FileName = ImageFileName,
                     ContentType = ImageFile.ContentType
                 };
-
-                var OldImagePath = Constants.UserImagesPath + user.Image.FileName;
-                if (System.IO.File.Exists(OldImagePath))
+                if (user.Image != null)
                 {
-                    System.IO.File.Delete(OldImagePath);
+                    var OldImagePath = Constants.UserImagesPath + user.Image.FileName;
+                    if (System.IO.File.Exists(OldImagePath))
+                    {
+                        System.IO.File.Delete(OldImagePath);
+                    }
+                    _context.UsersImage.Remove(user.Image);
                 }
-                if (user.Image != null) _context.UsersImage.Remove(user.Image);
                 user.Image = UserImage;
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
