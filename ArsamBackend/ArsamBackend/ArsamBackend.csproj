@@ -26,5 +26,10 @@
     <PackageReference Include="NLog.Web.AspNetCore" Version="4.9.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Images\Events\" />
+    <Folder Include="Images\Users\" />
+  </ItemGroup>
+
 
 </Project>
