@@ -229,7 +229,7 @@ namespace ArsamBackend.Controllers
             var files = Request.Form.Files;
             if (files.Count != 1) return BadRequest(Constants.OneImageRequiredError);
             var ImageFile = files[0];
-
+            
             string path = Constants.UserImagesPath;
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
@@ -255,7 +255,7 @@ namespace ArsamBackend.Controllers
                 {
                     System.IO.File.Delete(OldImagePath);
                 }
-                _context.UsersImage.Remove(user.Image);
+                if (user.Image != null) _context.UsersImage.Remove(user.Image);
                 user.Image = UserImage;
                 _context.Users.Update(user);
                 await _context.SaveChangesAsync();
