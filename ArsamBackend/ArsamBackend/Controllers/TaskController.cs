@@ -41,14 +41,14 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(InputTaskViewModel incomeTask)
         {
-            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], incomeTask.EventId);
+            if (userRole != Role.Admin)
+                return StatusCode(403, "access denied, you are not an admin");
+
             Event taskEvent = await _context.Events.FindAsync(incomeTask.EventId);
 
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
-
-            if (requestedUser != taskEvent.Creator)
-                return StatusCode(403, "access denied");
 
             Task newTask = await _taskService.CreateTask(incomeTask, taskEvent);
 
@@ -61,17 +61,19 @@ namespace ArsamBackend.Controllers
         public async Task<ActionResult> Update(int id, InputTaskViewModel incomeTask)
         {
             AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+
             var existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)
                 return StatusCode(404, "task not found");
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], existTask.EventId);
 
             Event taskEvent = existTask.Event;
 
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
 
-            if (!(taskEvent.EventMembers.Contains(requestedUser) || requestedUser == taskEvent.Creator))
+            if (!(taskEvent.EventMembers.Contains(requestedUser) || userRole == Role.Admin))
                 return StatusCode(403, "access denied");
 
             existTask.Name = incomeTask.Name;
@@ -89,7 +91,8 @@ namespace ArsamBackend.Controllers
         public async Task<ActionResult> Delete(int id)
         {
             AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-            var existTask = await _context.Tasks.FindAsync(id);
+
+            Task existTask = await _context.Tasks.FindAsync(id);
 
             if (existTask == null || existTask.IsDeleted)
                 return StatusCode(404, "task not found");
@@ -99,7 +102,9 @@ namespace ArsamBackend.Controllers
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
 
-            if (!(taskEvent.EventMembers.Contains(requestedUser) || requestedUser == taskEvent.Creator))
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], taskEvent.Id);
+
+            if (!(taskEvent.EventMembers.Contains(requestedUser) || userRole == Role.Admin))
                 return StatusCode(403, "access denied");
 
             existTask.IsDeleted = true;
@@ -125,7 +130,9 @@ namespace ArsamBackend.Controllers
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
 
-            if (!(taskEvent.EventMembers.Contains(requestedUser) || requestedUser == taskEvent.Creator))
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], taskEvent.Id);
+
+            if (!(taskEvent.EventMembers.Contains(requestedUser) || userRole == Role.Admin))
                 return StatusCode(403, "access denied");
 
             var member = await _context.Users.SingleOrDefaultAsync(c => c.Email == memberEmail);
@@ -163,8 +170,10 @@ namespace ArsamBackend.Controllers
 
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
+            
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], taskEvent.Id);
 
-            if (!(taskEvent.EventMembers.Contains(requestedUser) || requestedUser == taskEvent.Creator))
+            if (!(taskEvent.EventMembers.Contains(requestedUser) || userRole == Role.Admin))
                 return StatusCode(403, "access denied");
 
             var member = await _context.Users.SingleOrDefaultAsync(c => c.Email == memberEmail);

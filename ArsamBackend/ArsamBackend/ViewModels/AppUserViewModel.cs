@@ -19,4 +19,14 @@ namespace ArsamBackend.ViewModels
         public string PhoneNumber { get; set; }
 
     }
+
+    public class EventOutputAppUserViewModel
+    {
+        public EventOutputAppUserViewModel(AppUser user)
+        {
+            Email = user.Email;
+        }
+
+        public string Email { get; set; }
+    }
 }

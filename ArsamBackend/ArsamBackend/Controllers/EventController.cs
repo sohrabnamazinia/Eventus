@@ -57,8 +57,9 @@ namespace ArsamBackend.Controllers
         {
             AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], eventId);
-           
+
             Event eve = await _context.Events.FindAsync(eventId);
+
 
             if (!(requestedUser == eve.Creator || userRole == Role.Admin))
                 return StatusCode(403, "access denied");
@@ -112,18 +113,18 @@ namespace ArsamBackend.Controllers
 
             Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], id);
 
-            OutputEventViewModel result;
-
-            if (userRole == Role.Admin || userRole == Role.Member)
-            {
-                result = new OutputEventViewModel(resultEvent, userRole);
-                return Ok(result);
-            }
-
-            if (resultEvent.IsPrivate)
+            if (resultEvent.IsPrivate && userRole == null)
                 return StatusCode(403, "access denied, this event is private");
 
-            result = new OutputEventViewModel(resultEvent);
+            if (userRole == Role.Admin)
+            {
+                List<AppUser> admins = _context.EventUserRole.Where(x => x.EventId == id && x.Role == Role.Admin)
+                    .Select(x => x.AppUser).ToList();
+                AdminOutputEventViewModel adminResult = new AdminOutputEventViewModel(resultEvent, admins, userRole);
+                return Ok(adminResult);
+            }
+
+            OutputEventViewModel result = new OutputEventViewModel(resultEvent, userRole);
             return Ok(result);
         }
 
@@ -187,12 +188,12 @@ namespace ArsamBackend.Controllers
 
             Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], eventId);
             if (userRole != null)
-                return BadRequest("you are a member already");
+                return BadRequest("you are in this event already");
 
             var userRoleInDb = await _context.EventUserRole.FindAsync(requestedUser.Id, existEvent.Id);
             if (userRoleInDb == null)
             {
-                var memberRoleRequest = new EventUserRole() { AppUser = requestedUser, AppUserId = requestedUser.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member, IsAccepted = false};
+                var memberRoleRequest = new EventUserRole() { AppUser = requestedUser, AppUserId = requestedUser.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member, IsAccepted = false };
                 await _context.EventUserRole.AddAsync(memberRoleRequest);
                 await _context.SaveChangesAsync();
                 return Ok("your request has been sent");
@@ -206,12 +207,12 @@ namespace ArsamBackend.Controllers
 
         [Authorize]
         [HttpPatch]
-        public async Task<ActionResult> AcceptJoinRequest(int eventId, string memberEmail)
+        public async Task<ActionResult> AcceptOrRejectJoinRequest(int eventId, string memberEmail, bool accept)
         {
             Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], eventId);
             if (userRole != Role.Admin)
                 return StatusCode(403, "access denied, you are not an admin");
-            
+
             Event existEvent = await _context.Events.FindAsync(eventId);
             if (existEvent == null || existEvent.IsDeleted)
                 return StatusCode(404, "event not found");
@@ -227,12 +228,19 @@ namespace ArsamBackend.Controllers
             if (userRoleInDb.IsAccepted)
                 return BadRequest("this user is already accepted");
 
+            if (!accept)
+            {
+                _context.EventUserRole.Remove(userRoleInDb);
+                await _context.SaveChangesAsync();
+                return Ok("user joinRequest rejected successfully");
+            }
+
             userRoleInDb.IsAccepted = true;
             var membersList = existEvent.EventMembers.ToList();
             membersList.Add(member);
             existEvent.EventMembers = membersList;
             await _context.SaveChangesAsync();
-            return Ok("accepted, this user is a member new");
+            return Ok("accepted, this user is a member now");
         }
 
         [Authorize]
@@ -251,7 +259,7 @@ namespace ArsamBackend.Controllers
 
             if (member == requestedUser)
                 return BadRequest("you can not make yourself a member , you are an admin");
-            
+
             Event existEvent = await _context.Events.FindAsync(id);
 
             if (existEvent == null || existEvent.IsDeleted)
@@ -285,6 +293,65 @@ namespace ArsamBackend.Controllers
             }
 
             return BadRequest();
+        }
+
+        [Authorize]
+        [HttpDelete]
+        public async Task<ActionResult> KickUser(int id, string userEmail)
+        {
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], id);
+            if (userRole != Role.Admin)
+                return StatusCode(403, "access denied, you are not an admin");
+
+            AppUser user = await _context.Users.SingleOrDefaultAsync(c => c.Email == userEmail);
+            if (user == null)
+                return StatusCode(404, "user with this email not found");
+
+            Event existEvent = await _context.Events.FindAsync(id);
+
+            if (existEvent == null || existEvent.IsDeleted)
+                return StatusCode(404, "event not found");
+
+            var userRoleInDb = await _context.EventUserRole.FindAsync(user.Id, id);
+            if (userRoleInDb == null)
+                return BadRequest("this user don't have any role in Event");
+
+            if (userRoleInDb.Role == Role.Member)
+            {
+                var membersList = existEvent.EventMembers.ToList();
+                membersList.Remove(user);
+                existEvent.EventMembers = membersList;
+            }
+
+            _context.EventUserRole.Remove(userRoleInDb);
+            await _context.SaveChangesAsync();
+            return Ok("user kicked");
+        }
+
+        [Authorize]
+        [HttpDelete]
+        public async Task<ActionResult> Leave(int id)
+        {
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+           
+            Event existEvent = await _context.Events.FindAsync(id);
+
+            if (existEvent == null || existEvent.IsDeleted)
+                return StatusCode(404, "event not found");
+
+            var userRoleInDb = await _context.EventUserRole.FindAsync(requestedUser.Id, existEvent.Id);
+            if (userRoleInDb == null)
+                return BadRequest("you don't have any role in this Event");
+
+            if (userRoleInDb.Role == Role.Member)
+            {
+                var membersList = existEvent.EventMembers.ToList();
+                membersList.Remove(requestedUser);
+                existEvent.EventMembers = membersList;
+            }
+            _context.EventUserRole.Remove(userRoleInDb);
+            await _context.SaveChangesAsync();
+            return Ok("you left the Event successfully");
         }
 
         [Authorize]
