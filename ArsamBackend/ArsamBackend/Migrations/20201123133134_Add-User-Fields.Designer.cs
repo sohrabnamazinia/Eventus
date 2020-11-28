@@ -4,14 +4,16 @@ using ArsamBackend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ArsamBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201123133134_Add-User-Fields")]
+    partial class AddUserFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -177,7 +179,7 @@ namespace ArsamBackend.Migrations
                     b.ToTable("Events");
                 });
 
-            modelBuilder.Entity("ArsamBackend.Models.EventImage", b =>
+            modelBuilder.Entity("ArsamBackend.Models.Image", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -197,28 +199,7 @@ namespace ArsamBackend.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("EventImages");
-                });
-
-            modelBuilder.Entity("ArsamBackend.Models.EventUserRole", b =>
-                {
-                    b.Property<string>("AppUserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("EventId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsAccepted")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("int");
-
-                    b.HasKey("AppUserId", "EventId");
-
-                    b.HasIndex("EventId");
-
-                    b.ToTable("EventUserRole");
+                    b.ToTable("Images");
                 });
 
             modelBuilder.Entity("ArsamBackend.Models.Task", b =>
@@ -446,32 +427,13 @@ namespace ArsamBackend.Migrations
                     b.Navigation("Creator");
                 });
 
-            modelBuilder.Entity("ArsamBackend.Models.EventImage", b =>
+            modelBuilder.Entity("ArsamBackend.Models.Image", b =>
                 {
                     b.HasOne("ArsamBackend.Models.Event", "Event")
                         .WithMany("Images")
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Event");
-                });
-
-            modelBuilder.Entity("ArsamBackend.Models.EventUserRole", b =>
-                {
-                    b.HasOne("ArsamBackend.Models.AppUser", "AppUser")
-                        .WithMany("Roles")
-                        .HasForeignKey("AppUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ArsamBackend.Models.Event", "Event")
-                        .WithMany()
-                        .HasForeignKey("EventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AppUser");
 
                     b.Navigation("Event");
                 });
@@ -550,8 +512,6 @@ namespace ArsamBackend.Migrations
             modelBuilder.Entity("ArsamBackend.Models.AppUser", b =>
                 {
                     b.Navigation("CreatedEvents");
-
-                    b.Navigation("Roles");
 
                     b.Navigation("Image");
                 });

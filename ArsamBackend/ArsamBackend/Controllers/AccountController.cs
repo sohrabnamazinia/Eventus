@@ -209,11 +209,90 @@ namespace ArsamBackend.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> SetName(string FirstName, string LastName, string Bio)
+        public async Task<IActionResult> UpdateProfile(UpdateProfileViewModel model)
         {
             AppUser user = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            user.FirstName = model.FirstName;
+            user.LastName = model.LastName;
+            user.Fields = CategoryService.BitWiseOr(model.Fields);
+            user.Description = model.Description;
+            _context.Entry(user).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+            _context.SaveChanges();
+            return Ok(new OutputAppUserViewModel(user));
+        }
 
-            return Ok();
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> UpdateImage()
+        {
+            AppUser user = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            var files = Request.Form.Files;
+            if (files.Count != 1) return BadRequest(Constants.OneImageRequiredError);
+            var ImageFile = files[0];
+            
+            string path = Constants.UserImagesPath;
+            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+
+            if (ImageFile != null && ImageFile.Length > 0)
+            {
+                if (!ImageFile.ContentType.ToLower().Contains("image")) return StatusCode(415);
+
+                var ImageFileName = Guid.NewGuid() + "_" + Path.GetFileName(ImageFile.FileName);
+                await using (var fileStream = new FileStream(Path.Combine(path, ImageFileName), FileMode.Create))
+                {
+                    await ImageFile.CopyToAsync(fileStream);
+                }
+
+                var UserImage = new UserImage()
+                {
+                    UserId = user.Id,
+                    FileName = ImageFileName,
+                    ContentType = ImageFile.ContentType
+                };
+                if (user.Image != null)
+                {
+                    var OldImagePath = Constants.UserImagesPath + user.Image.FileName;
+                    if (System.IO.File.Exists(OldImagePath))
+                    {
+                        System.IO.File.Delete(OldImagePath);
+                    }
+                    _context.UsersImage.Remove(user.Image);
+                }
+                user.Image = UserImage;
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+                return Ok(new OutputAppUserViewModel(user));
+            }
+
+                
+            return BadRequest(Constants.ImageNotFound);
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetProfile(string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+            return Ok(new OutputAppUserViewModel(user));
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            AppUser user = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            if (user == null) return NotFound("User not found");
+            var result = await userManager.ChangePasswordAsync(user, model.OldPass, model.NewPass);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error.Description);
+                return Conflict(ModelState);
+            }
+            return Ok(new OutputAppUserViewModel(user));
         }
 
     }

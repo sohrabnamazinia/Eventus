@@ -109,4 +109,30 @@ namespace ArsamBackend.ViewModels
         public List<EventOutputAppUserViewModel> EventAdmins { get; set; }
 
     }
+
+    public class OutputAbstractViewModel
+    {
+        public OutputAbstractViewModel(Event ev)
+        {
+            Name = ev.Name;
+            Id = ev.Id;
+            IsPrivate = ev.IsPrivate;
+            IsProject = ev.IsProject;
+            StartDate = ev.StartDate;
+            EndDate = ev.EndDate;
+            Creator = ev.Creator.UserName;
+            Categories = CategoryService.ConvertCategoriesToList(ev.Categories);
+            EventMembers = ev.EventMembers.Select(x => x.UserName).ToList();
+        }
+
+        public string Name { get; set; }
+        public int Id { get; set; }
+        public bool IsProject { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public bool IsPrivate { get; set; }
+        public string Creator { get; set; }
+        public List<int> Categories { get; set; }
+        public List<string> EventMembers { get; set; }
+    }
 }

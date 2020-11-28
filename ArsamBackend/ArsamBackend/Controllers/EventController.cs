@@ -392,7 +392,5 @@ namespace ArsamBackend.Controllers
             return Ok(outModels);
         }
 
-
-
     }
 }

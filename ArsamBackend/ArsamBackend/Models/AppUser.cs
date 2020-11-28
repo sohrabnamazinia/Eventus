@@ -15,7 +15,9 @@ namespace ArsamBackend.Models
         public virtual ICollection<Task> AssignedTasks { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string Bio { get; set; }
-        //public ICollection<Category> FavouiteFileds { get; set; }
+        public string Description { get; set; }
+        public virtual UserImage Image { get; set; }
+        public virtual Category Fields { get; set; }
+
     }
 }

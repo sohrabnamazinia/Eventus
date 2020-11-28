@@ -19,11 +19,13 @@ namespace ArsamBackend.Models
         public DbSet<Task> Tasks { get; set; }
         public DbSet<EventImage> EventImages { get; set; }
         public DbSet<EventUserRole> EventUserRole { get; set; }
+        public DbSet<UserImage> UsersImage { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<Event>().HasOne<AppUser>(s => s.Creator).WithMany(x => x.CreatedEvents);
+            modelBuilder.Entity<AppUser>().HasOne(x => x.Image).WithOne(x => x.User).HasForeignKey<UserImage>(x => x.UserId);
             modelBuilder.Entity<EventUserRole>().HasKey(o => new {o.AppUserId, o.EventId});
         }
 
