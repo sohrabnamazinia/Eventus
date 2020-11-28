@@ -58,10 +58,11 @@ namespace ArsamBackend.Controllers
             AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], eventId);
 
-            Event eve = await _context.Events.FindAsync(eventId);
+            Event existEvent = await _context.Events.FindAsync(eventId);
+            if (existEvent == null || existEvent.IsDeleted)
+                return NotFound("no event found by this id: " + eventId);
 
-
-            if (!(requestedUser == eve.Creator || userRole == Role.Admin))
+            if (!(requestedUser == existEvent.Creator || userRole == Role.Admin))
                 return StatusCode(403, "access denied");
 
             var req = Request.Form.Files;
@@ -87,17 +88,17 @@ namespace ArsamBackend.Controllers
                     var image = new EventImage()
                     {
                         EventId = eventId,
-                        Event = eve,
+                        Event = existEvent,
                         FileName = fileName,
                         ContentType = file.ContentType
                     };
-                    eve.Images.Add(image);
+                    existEvent.Images.Add(image);
                     await _context.SaveChangesAsync();
                 }
                 else
                     return BadRequest("image not found");
             }
-            var result = new OutputEventViewModel(eve);
+            var result = new OutputEventViewModel(existEvent);
             return Ok(result);
 
         }
@@ -107,7 +108,6 @@ namespace ArsamBackend.Controllers
         public async Task<ActionResult> Get(int id)
         {
             Event resultEvent = await _context.Events.FindAsync(id);
-
             if (resultEvent == null || resultEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
 
@@ -132,14 +132,13 @@ namespace ArsamBackend.Controllers
         [HttpPut]
         public async Task<ActionResult> Update(int id, InputEventViewModel incomeEvent)
         {
+            Event existEvent = await _context.Events.FindAsync(id);
+            if (existEvent == null || existEvent.IsDeleted)
+                return NotFound("no event found by this id: " + id);
+
             Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], id);
             if (userRole != Role.Admin)
                 return StatusCode(403, "access denied, you are not an admin");
-
-            Event existEvent = await _context.Events.FindAsync(id);
-
-            if (existEvent == null || existEvent.IsDeleted)
-                return NotFound("no event found by this id: " + id);
 
             existEvent.Name = incomeEvent.Name;
             existEvent.IsProject = incomeEvent.IsProject;
@@ -161,14 +160,14 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
+            
+            Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
+            if (existEvent == null || existEvent.IsDeleted)
+                return NotFound("no event found by this id: " + id);
+
             Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], id);
             if (userRole != Role.Admin)
                 return StatusCode(403, "access denied, you are not an admin");
-
-            Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
-
-            if (existEvent == null || existEvent.IsDeleted)
-                return NotFound("no event found by this id: " + id);
 
             existEvent.IsDeleted = true;
             await _context.SaveChangesAsync();
@@ -209,13 +208,13 @@ namespace ArsamBackend.Controllers
         [HttpPatch]
         public async Task<ActionResult> AcceptOrRejectJoinRequest(int eventId, string memberEmail, bool accept)
         {
-            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], eventId);
-            if (userRole != Role.Admin)
-                return StatusCode(403, "access denied, you are not an admin");
-
             Event existEvent = await _context.Events.FindAsync(eventId);
             if (existEvent == null || existEvent.IsDeleted)
                 return StatusCode(404, "event not found");
+
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], eventId);
+            if (userRole != Role.Admin)
+                return StatusCode(403, "access denied, you are not an admin");
 
             AppUser member = await _context.Users.SingleOrDefaultAsync(c => c.Email == memberEmail);
             if (member == null)
@@ -249,6 +248,11 @@ namespace ArsamBackend.Controllers
         {
             AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
 
+            Event existEvent = await _context.Events.FindAsync(id);
+
+            if (existEvent == null || existEvent.IsDeleted)
+                return StatusCode(404, "event not found");
+
             Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], id);
             if (userRole != Role.Admin)
                 return StatusCode(403, "access denied, you are not an admin");
@@ -260,11 +264,7 @@ namespace ArsamBackend.Controllers
             if (member == requestedUser)
                 return BadRequest("you can not make yourself a member , you are an admin");
 
-            Event existEvent = await _context.Events.FindAsync(id);
-
-            if (existEvent == null || existEvent.IsDeleted)
-                return StatusCode(404, "event not found");
-
+           
             if (existEvent.IsLimitedMember)
                 if (existEvent.EventMembers.Count() >= existEvent.MaximumNumberOfMembers)
                     return BadRequest("Event is full");
@@ -278,8 +278,7 @@ namespace ArsamBackend.Controllers
                 membersList.Add(member);
                 existEvent.EventMembers = membersList;
                 await _context.SaveChangesAsync();
-                var result = new OutputEventViewModel(existEvent, userRole);
-                return Ok(result);
+                return Ok("member added");
             }
             else if (userRoleInDb.Role == Role.Admin)
             {
@@ -299,6 +298,10 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> KickUser(int id, string userEmail)
         {
+            Event existEvent = await _context.Events.FindAsync(id);
+            if (existEvent == null || existEvent.IsDeleted)
+                return StatusCode(404, "event not found");
+
             Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], id);
             if (userRole != Role.Admin)
                 return StatusCode(403, "access denied, you are not an admin");
@@ -306,11 +309,6 @@ namespace ArsamBackend.Controllers
             AppUser user = await _context.Users.SingleOrDefaultAsync(c => c.Email == userEmail);
             if (user == null)
                 return StatusCode(404, "user with this email not found");
-
-            Event existEvent = await _context.Events.FindAsync(id);
-
-            if (existEvent == null || existEvent.IsDeleted)
-                return StatusCode(404, "event not found");
 
             var userRoleInDb = await _context.EventUserRole.FindAsync(user.Id, id);
             if (userRoleInDb == null)
@@ -335,7 +333,6 @@ namespace ArsamBackend.Controllers
             AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
            
             Event existEvent = await _context.Events.FindAsync(id);
-
             if (existEvent == null || existEvent.IsDeleted)
                 return StatusCode(404, "event not found");
 
@@ -358,6 +355,10 @@ namespace ArsamBackend.Controllers
         [HttpPatch]
         public async Task<ActionResult> PromoteAdmin(int id, string memberEmail)
         {
+            Event existEvent = await _context.Events.FindAsync(id);
+            if (existEvent == null || existEvent.IsDeleted)
+                return StatusCode(404, "event not found");
+
             Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], id);
             if (userRole != Role.Admin)
                 return StatusCode(403, "access denied, you are not an admin");
@@ -366,16 +367,15 @@ namespace ArsamBackend.Controllers
             if (member == null)
                 return StatusCode(404, "Member not found");
 
-            Event existEvent = await _context.Events.FindAsync(id);
-
-            if (existEvent == null || existEvent.IsDeleted)
-                return StatusCode(404, "event not found");
-
+           
             if (!existEvent.EventMembers.Contains(member))
                 return StatusCode(403, "access denied, only members can be promote to admin");
 
             var userRoleInDb = await _context.EventUserRole.FindAsync(member.Id, existEvent.Id);
             userRoleInDb.Role = Role.Admin;
+            var membersList = existEvent.EventMembers.ToList();
+            membersList.Remove(member);
+            existEvent.EventMembers = membersList;
             await _context.SaveChangesAsync();
 
             return Ok("member promoted");
