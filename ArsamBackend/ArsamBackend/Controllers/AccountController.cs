@@ -212,10 +212,10 @@ namespace ArsamBackend.Controllers
         public async Task<IActionResult> UpdateProfile(UpdateProfileViewModel model)
         {
             AppUser user = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-            user.FirstName = model.FirstName;
-            user.LastName = model.LastName;
-            user.Fields = CategoryService.BitWiseOr(model.Fields);
-            user.Description = model.Description;
+            user.FirstName = model.FirstName.Trim().Equals(string.Empty) ? null : model.FirstName;
+            user.LastName = model.LastName.Trim().Equals(string.Empty) ? null : model.LastName;
+            user.Fields = model.Fields == null ? 0 : CategoryService.BitWiseOr(model.Fields);
+            user.Description = model.Description.Trim().Equals(string.Empty) ? null : model.Description;
             _context.Entry(user).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
             _context.SaveChanges();
             return Ok(new OutputAppUserViewModel(user));
@@ -229,7 +229,7 @@ namespace ArsamBackend.Controllers
             var files = Request.Form.Files;
             if (files.Count != 1) return BadRequest(Constants.OneImageRequiredError);
             var ImageFile = files[0];
-            
+
             string path = Constants.UserImagesPath;
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
