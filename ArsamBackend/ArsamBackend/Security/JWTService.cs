@@ -17,6 +17,8 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using ArsamBackend.Migrations;
+using Castle.Core.Internal;
 using Microsoft.EntityFrameworkCore;
 
 namespace ArsamBackend.Security
@@ -40,6 +42,11 @@ namespace ArsamBackend.Security
             {
                 new Claim(JwtRegisteredClaimNames.NameId, user.UserName)
             };
+
+            foreach (var role in user.Roles)
+                if (role.IsAccepted)
+                    claims.Add(new Claim(role.EventId.ToString(), ((int) role.Role).ToString()));
+            
 
             var TokenHandler = new JwtSecurityTokenHandler();
             var TokenDescriptor = new SecurityTokenDescriptor()
@@ -70,6 +77,21 @@ namespace ArsamBackend.Security
         {
             var userEmail = FindEmailByToken(authorization);
             return await context.Users.SingleOrDefaultAsync(x => x.Email == userEmail);
+        }
+        public Role? FindRoleByToken(string authorization, int eventId)
+        {
+            string token = string.Empty;
+            if (AuthenticationHeaderValue.TryParse(authorization, out var headerValue))
+            {
+                token = headerValue.Parameter;
+            }
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var securityToken = tokenHandler.ReadToken(token) as JwtSecurityToken;
+            var role = securityToken.Claims.SingleOrDefault(claim => claim.Type == eventId.ToString());
+            if (role == null)
+                return null;
+            Role userRole = (Role)int.Parse(role.Value);
+            return userRole;
         }
 
         #region utilities

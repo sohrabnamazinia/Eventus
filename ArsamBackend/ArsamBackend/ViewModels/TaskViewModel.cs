@@ -32,7 +32,7 @@ namespace ArsamBackend.ViewModels
             Status = task.Status.ToString();
             Order = task.Order;
             EventId = task.Event.Id;
-            AssignedMembers = task.AssignedMembers.Select(x => new OutputAppUserViewModel(x)).ToList();
+            AssignedMembers = task.AssignedMembers.Select(x => new EventOutputAppUserViewModel(x)).ToList();
         }
         public int Id { get; set; }
 
@@ -44,7 +44,7 @@ namespace ArsamBackend.ViewModels
 
         public int EventId { get; set; }
 
-        public List<OutputAppUserViewModel> AssignedMembers { get; set; }
+        public List<EventOutputAppUserViewModel> AssignedMembers { get; set; }
 
     }
 
