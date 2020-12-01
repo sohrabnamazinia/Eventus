@@ -283,6 +283,9 @@ namespace ArsamBackend.Controllers
             else if (userRoleInDb.Role == Role.Admin)
             {
                 userRoleInDb.Role = Role.Member;
+                var membersList = existEvent.EventMembers.ToList();
+                membersList.Add(member);
+                existEvent.EventMembers = membersList;
                 await _context.SaveChangesAsync();
                 return Ok("this admin demoted to member");
             }
