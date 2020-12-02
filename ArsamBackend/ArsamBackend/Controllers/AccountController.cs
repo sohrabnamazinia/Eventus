@@ -228,14 +228,26 @@ namespace ArsamBackend.Controllers
             AppUser user = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var files = Request.Form.Files;
             if (files.Count != 1) return BadRequest(Constants.OneImageRequiredError);
+
             var ImageFile = files[0];
+            
 
             string path = Constants.UserImagesPath;
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
             if (ImageFile != null && ImageFile.Length > 0)
             {
-                if (!ImageFile.ContentType.ToLower().Contains("image")) return StatusCode(415);
+                using (var ms = new MemoryStream())
+                {
+                    ImageFile.CopyTo(ms);
+                    var fileBytes = ms.ToArray();
+                    if (!Constants.FileFormatChecker(fileBytes) || !Constants.CheckFileNameExtension(Path.GetExtension(ImageFile.FileName))) return StatusCode(415, "File content is not a valid format!");
+                }
+
+
+                var ImageSize = ImageFile.Length;
+                if (ImageSize > Constants.MaxImageSizeByte) return BadRequest("File exceeds Maximum size!");
+                var B = ImageFile;
 
                 var ImageFileName = Guid.NewGuid() + "_" + Path.GetFileName(ImageFile.FileName);
                 await using (var fileStream = new FileStream(Path.Combine(path, ImageFileName), FileMode.Create))
@@ -264,7 +276,6 @@ namespace ArsamBackend.Controllers
                 return Ok(new OutputAppUserViewModel(user));
             }
 
-                
             return BadRequest(Constants.ImageNotFound);
         }
 

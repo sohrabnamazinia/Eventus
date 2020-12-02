@@ -57,7 +57,7 @@ namespace ArsamBackend.Models
         {
             Category filteredCategories = (model.Categories == null) ? 0 : CategoryService.BitWiseOr(model.Categories);
             var events = _context.Events.Where(x =>
-            (model.Name == null || x.Name == model.Name) &&
+            (model.Name == null || x.Name.Contains(model.Name)) &&
             (model.IsPrivate == null || x.IsPrivate == model.IsPrivate) &&
             (model.IsProject == null || x.IsProject == model.IsProject) &&
             (model.MembersCountMin == null || x.EventMembers.Count() >= model.MembersCountMin) &&
