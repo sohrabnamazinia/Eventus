@@ -284,6 +284,7 @@ namespace ArsamBackend.Controllers
         [Authorize]
         public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
         {
+            if (model.OldPass == model.NewPass) return BadRequest("Old pass word is equal to new password");
             AppUser user = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             if (user == null) return NotFound("User not found");
             var result = await userManager.ChangePasswordAsync(user, model.OldPass, model.NewPass);
