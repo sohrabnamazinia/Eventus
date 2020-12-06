@@ -244,7 +244,6 @@ namespace ArsamBackend.Controllers
                     if (!Constants.FileFormatChecker(fileBytes) || !Constants.CheckFileNameExtension(Path.GetExtension(ImageFile.FileName))) return StatusCode(415, "File content is not a valid format!");
                 }
 
-
                 var ImageSize = ImageFile.Length;
                 if (ImageSize > Constants.MaxImageSizeByte) return BadRequest("File exceeds Maximum size!");
                 var B = ImageFile;

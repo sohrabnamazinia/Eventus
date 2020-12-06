@@ -389,6 +389,8 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult<ICollection<Event>>> Filter(FilterEventsViewModel model, [FromQuery] PaginationParameters pagination)
         {
+            
+            if ((model.DateMax != null && model.DateMin != null) && DateTime.Compare((DateTime) model.DateMin, (DateTime) model.DateMax) >= 0) return BadRequest("Date interval is negative");
             var FilteredEvents = await _eventService.FilterEvents(model, pagination);
             List<OutputEventViewModel> outModels = new List<OutputEventViewModel>();
             foreach (var ev in FilteredEvents) outModels.Add(new OutputEventViewModel(ev));
