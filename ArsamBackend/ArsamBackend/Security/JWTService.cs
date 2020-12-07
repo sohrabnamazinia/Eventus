@@ -44,7 +44,7 @@ namespace ArsamBackend.Security
             };
 
             foreach (var role in user.Roles)
-                if (role.IsAccepted)
+                if (role.Status == UserRoleStatus.Accepted && !role.IsDeleted)
                     claims.Add(new Claim(role.EventId.ToString(), ((int) role.Role).ToString()));
             
 
