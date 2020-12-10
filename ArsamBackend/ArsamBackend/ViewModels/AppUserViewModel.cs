@@ -50,4 +50,16 @@ namespace ArsamBackend.ViewModels
 
         public string Email { get; set; }
     }
+
+    public class TicketOutputAppUserViewModel
+    {
+        public TicketOutputAppUserViewModel(AppUser user)
+        {
+            Email = user.Email;
+            Tickets = user.Tickets.Select(x => x.Id).ToList();
+        }
+
+        public string Email { get; set; }
+        public List<int> Tickets { get; set; }
+    }
 }

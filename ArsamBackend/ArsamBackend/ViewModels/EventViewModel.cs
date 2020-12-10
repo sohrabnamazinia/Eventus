@@ -123,6 +123,8 @@ namespace ArsamBackend.ViewModels
             Creator = ev.Creator.UserName;
             Categories = CategoryService.ConvertCategoriesToList(ev.Categories);
             EventMembers = ev.EventMembers.Select(x => x.UserName).ToList();
+            EventTicketTypes = ev.TicketTypes.Select(x => x.Name).ToList();
+            EventTickets = ev.Tickets.Select(x => x.User.UserName).ToList();
         }
 
         public string Name { get; set; }
@@ -134,5 +136,7 @@ namespace ArsamBackend.ViewModels
         public string Creator { get; set; }
         public List<int> Categories { get; set; }
         public List<string> EventMembers { get; set; }
+        public List<string> EventTicketTypes { get; set; }
+        public List<string> EventTickets { get; set; }
     }
 }

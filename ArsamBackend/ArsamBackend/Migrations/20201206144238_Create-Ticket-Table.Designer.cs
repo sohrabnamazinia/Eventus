@@ -4,14 +4,16 @@ using ArsamBackend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ArsamBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201206144238_Create-Ticket-Table")]
+    partial class CreateTicketTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,9 +58,6 @@ namespace ArsamBackend.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
-
-                    b.Property<long>("Balance")
-                        .HasColumnType("bigint");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -264,9 +263,6 @@ namespace ArsamBackend.Migrations
                     b.Property<int>("EventId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("TicketTypeId")
-                        .HasColumnType("int");
-
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
@@ -274,44 +270,9 @@ namespace ArsamBackend.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.HasIndex("TicketTypeId");
-
                     b.HasIndex("UserId");
 
                     b.ToTable("Tickets");
-                });
-
-            modelBuilder.Entity("ArsamBackend.Models.TicketType", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .UseIdentityColumn();
-
-                    b.Property<long>("Capacity")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("Count")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("EventId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long>("Price")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("ID");
-
-                    b.HasIndex("EventId");
-
-                    b.ToTable("TicketTypes");
                 });
 
             modelBuilder.Entity("ArsamBackend.Models.UserImage", b =>
@@ -553,36 +514,18 @@ namespace ArsamBackend.Migrations
             modelBuilder.Entity("ArsamBackend.Models.Ticket", b =>
                 {
                     b.HasOne("ArsamBackend.Models.Event", "Event")
-                        .WithMany("Tickets")
+                        .WithMany()
                         .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ArsamBackend.Models.TicketType", "Type")
-                        .WithMany("Tickets")
-                        .HasForeignKey("TicketTypeId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("ArsamBackend.Models.AppUser", "User")
-                        .WithMany("Tickets")
+                        .WithMany()
                         .HasForeignKey("UserId");
 
                     b.Navigation("Event");
 
-                    b.Navigation("Type");
-
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ArsamBackend.Models.TicketType", b =>
-                {
-                    b.HasOne("ArsamBackend.Models.Event", "Event")
-                        .WithMany("TicketTypes")
-                        .HasForeignKey("EventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Event");
                 });
 
             modelBuilder.Entity("ArsamBackend.Models.UserImage", b =>
@@ -652,8 +595,6 @@ namespace ArsamBackend.Migrations
                     b.Navigation("Image");
 
                     b.Navigation("Roles");
-
-                    b.Navigation("Tickets");
                 });
 
             modelBuilder.Entity("ArsamBackend.Models.Event", b =>
@@ -661,15 +602,6 @@ namespace ArsamBackend.Migrations
                     b.Navigation("Images");
 
                     b.Navigation("Tasks");
-
-                    b.Navigation("Tickets");
-
-                    b.Navigation("TicketTypes");
-                });
-
-            modelBuilder.Entity("ArsamBackend.Models.TicketType", b =>
-                {
-                    b.Navigation("Tickets");
                 });
 #pragma warning restore 612, 618
         }

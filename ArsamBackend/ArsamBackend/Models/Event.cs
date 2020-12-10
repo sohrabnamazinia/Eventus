@@ -42,6 +42,10 @@ namespace ArsamBackend.Models
         public bool IsLimitedMember { get; set; }
 
         public int MaximumNumberOfMembers { get; set; }
+        
+        public virtual ICollection<Ticket> Tickets { get; set; }
+
+        public virtual ICollection<TicketType> TicketTypes { get; set; }
 
         public virtual List<AppUser> EventMembers { get; set; }
 
