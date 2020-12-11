@@ -181,7 +181,6 @@ namespace ArsamBackend.Controllers
             AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
 
             Event existEvent = await _context.Events.FindAsync(eventId);
-
             if (existEvent == null || existEvent.IsDeleted)
                 return StatusCode(404, "event not found");
 
@@ -192,15 +191,49 @@ namespace ArsamBackend.Controllers
             var userRoleInDb = await _context.EventUserRole.FindAsync(requestedUser.Id, existEvent.Id);
             if (userRoleInDb == null)
             {
-                var memberRoleRequest = new EventUserRole() { AppUser = requestedUser, AppUserId = requestedUser.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member, IsAccepted = false };
+                var memberRoleRequest = new EventUserRole() { AppUser = requestedUser, AppUserId = requestedUser.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member, Status = UserRoleStatus.Pending };
                 await _context.EventUserRole.AddAsync(memberRoleRequest);
                 await _context.SaveChangesAsync();
                 return Ok("your request has been sent");
             }
-            if (!userRoleInDb.IsAccepted)
-                return BadRequest("your join request has been sent before");
+            else if (userRoleInDb.IsDeleted)
+            {
+                _context.EventUserRole.Remove(userRoleInDb);//remove last information 
+                var memberRoleRequest = new EventUserRole() { AppUser = requestedUser, AppUserId = requestedUser.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member, Status = UserRoleStatus.Pending };
+                await _context.EventUserRole.AddAsync(memberRoleRequest);
+                await _context.SaveChangesAsync();
+                return Ok("your request has been sent");
+            }
+
+            if (userRoleInDb.Status == UserRoleStatus.Rejected)
+            {
+                userRoleInDb.Status = UserRoleStatus.Pending;
+                userRoleInDb.DateOfRequest = DateTime.Now;
+                await _context.SaveChangesAsync();
+                return Ok("your request has been sent again");
+            }
+            else if (userRoleInDb.Status == UserRoleStatus.Pending)
+                return BadRequest("your join request has been sent before it's pending for accept");
             else
-                return BadRequest("you are a member , login again please");
+                return BadRequest("you are in this event , login again please");
+        }
+        [Authorize]
+        [HttpGet]
+        public async Task<ActionResult> GetJoinRequests(int eventId)
+        {
+            Event existEvent = await _context.Events.FindAsync(eventId);
+            if (existEvent == null || existEvent.IsDeleted)
+                return StatusCode(404, "event not found");
+
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], eventId);
+            if (userRole != Role.Admin)
+                return StatusCode(403, "access denied, you are not an admin");
+
+            var joinRequests = _context.EventUserRole.Where(x =>
+                (x.Event.Id == eventId) && (x.Status == UserRoleStatus.Pending) && (x.Role == Role.Member) && (!x.IsDeleted)).ToList();
+
+            var results = joinRequests.Select(x => new OutputJoinRequestViewModel(x)).ToList();
+            return Ok(results);
         }
 
 
@@ -221,25 +254,30 @@ namespace ArsamBackend.Controllers
                 return StatusCode(404, "user with this email not found");
 
             var userRoleInDb = await _context.EventUserRole.FindAsync(member.Id, eventId);
-            if (userRoleInDb == null)
+            if (userRoleInDb == null || userRoleInDb.IsDeleted)
                 return BadRequest("this user has no join request");
 
-            if (userRoleInDb.IsAccepted)
+            if (userRoleInDb.Status == UserRoleStatus.Accepted)
                 return BadRequest("this user is already accepted");
+            else if (userRoleInDb.Status == UserRoleStatus.Rejected)
+                return BadRequest("this user is already rejected");
 
             if (!accept)
             {
-                _context.EventUserRole.Remove(userRoleInDb);
+                userRoleInDb.Status = UserRoleStatus.Rejected;
                 await _context.SaveChangesAsync();
                 return Ok("user joinRequest rejected successfully");
             }
 
-            userRoleInDb.IsAccepted = true;
-            var membersList = existEvent.EventMembers.ToList();
-            membersList.Add(member);
-            existEvent.EventMembers = membersList;
-            await _context.SaveChangesAsync();
-            return Ok("accepted, this user is a member now");
+            else
+            {
+                userRoleInDb.Status = UserRoleStatus.Accepted;
+                var membersList = existEvent.EventMembers.ToList();
+                membersList.Add(member);
+                existEvent.EventMembers = membersList;
+                await _context.SaveChangesAsync();
+                return Ok("accepted, this user is a member now");
+            }
         }
 
         [Authorize]
@@ -272,13 +310,24 @@ namespace ArsamBackend.Controllers
             var userRoleInDb = await _context.EventUserRole.FindAsync(member.Id, existEvent.Id);
             if (userRoleInDb == null)
             {
-                var memberRoleClaim = new EventUserRole() { AppUser = member, AppUserId = member.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member };
-                await _context.EventUserRole.AddAsync(memberRoleClaim);
+                var memberRole = new EventUserRole() { AppUser = member, AppUserId = member.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member };
+                await _context.EventUserRole.AddAsync(memberRole);
                 var membersList = existEvent.EventMembers.ToList();
                 membersList.Add(member);
                 existEvent.EventMembers = membersList;
                 await _context.SaveChangesAsync();
                 return Ok("member added");
+            }
+            else if (userRoleInDb.IsDeleted)
+            {
+                _context.EventUserRole.Remove(userRoleInDb);//remove last information 
+                var memberRoleRequest = new EventUserRole() { AppUser = requestedUser, AppUserId = requestedUser.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member, Status = UserRoleStatus.Pending };
+                await _context.EventUserRole.AddAsync(memberRoleRequest);
+                var membersList = existEvent.EventMembers.ToList();
+                membersList.Add(member);
+                existEvent.EventMembers = membersList;
+                await _context.SaveChangesAsync();
+                return Ok("your request has been sent");
             }
             else if (userRoleInDb.Role == Role.Admin)
             {
@@ -289,9 +338,18 @@ namespace ArsamBackend.Controllers
                 await _context.SaveChangesAsync();
                 return Ok("this admin demoted to member");
             }
-            else if (userRoleInDb.Role == Role.Member)
+            else if (userRoleInDb.Role == Role.Member && userRoleInDb.Status == UserRoleStatus.Accepted)
             {
                 return BadRequest("this user is already a member of this event");
+            }
+            else if (userRoleInDb.Role == Role.Member && userRoleInDb.Status != UserRoleStatus.Accepted)
+            {
+                var membersList = existEvent.EventMembers.ToList();
+                membersList.Add(member);
+                existEvent.EventMembers = membersList;
+                userRoleInDb.Status = UserRoleStatus.Accepted;
+                await _context.SaveChangesAsync();
+                return Ok("user request accepted and this user is a member now");
             }
 
             return BadRequest();
@@ -314,7 +372,7 @@ namespace ArsamBackend.Controllers
                 return StatusCode(404, "user with this email not found");
 
             var userRoleInDb = await _context.EventUserRole.FindAsync(user.Id, id);
-            if (userRoleInDb == null)
+            if (userRoleInDb == null || userRoleInDb.IsDeleted || userRoleInDb.Status != UserRoleStatus.Accepted)
                 return BadRequest("this user don't have any role in Event");
 
             if (userRoleInDb.Role == Role.Member)
@@ -324,7 +382,7 @@ namespace ArsamBackend.Controllers
                 existEvent.EventMembers = membersList;
             }
 
-            _context.EventUserRole.Remove(userRoleInDb);
+            userRoleInDb.IsDeleted = true;
             await _context.SaveChangesAsync();
             return Ok("user kicked");
         }
@@ -340,7 +398,7 @@ namespace ArsamBackend.Controllers
                 return StatusCode(404, "event not found");
 
             var userRoleInDb = await _context.EventUserRole.FindAsync(requestedUser.Id, existEvent.Id);
-            if (userRoleInDb == null)
+            if (userRoleInDb == null || userRoleInDb.IsDeleted || userRoleInDb.Status != UserRoleStatus.Accepted)
                 return BadRequest("you don't have any role in this Event");
 
             if (userRoleInDb.Role == Role.Member)
@@ -349,7 +407,7 @@ namespace ArsamBackend.Controllers
                 membersList.Remove(requestedUser);
                 existEvent.EventMembers = membersList;
             }
-            _context.EventUserRole.Remove(userRoleInDb);
+            userRoleInDb.IsDeleted = true;
             await _context.SaveChangesAsync();
             return Ok("you left the Event successfully");
         }

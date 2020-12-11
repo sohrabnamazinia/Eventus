@@ -13,7 +13,15 @@ namespace ArsamBackend.Models
         public virtual Event Event { get; set; }
         public int EventId { get; set; }
         public Role Role { get; set; }
-        public bool IsAccepted { get; set; } = true;
+        public UserRoleStatus Status { get; set; } = UserRoleStatus.Accepted;
+        public DateTime DateOfRequest { get; set; } = DateTime.Now;
+        public bool IsDeleted { get; set; } = false;
+    }
 
+    public enum UserRoleStatus
+    {
+        Accepted = 1,
+        Pending = 0,
+        Rejected = -1
     }
 }
