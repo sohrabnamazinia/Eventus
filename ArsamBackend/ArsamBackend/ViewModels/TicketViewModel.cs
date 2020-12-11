@@ -22,4 +22,19 @@ namespace ArsamBackend.ViewModels
         public string User { get; set; }
 
     }
+
+    public class TicketProfileViewModel
+    {
+        public TicketProfileViewModel(Ticket t)
+        {
+            EventName = t.Event.Name;
+            TicketTypeName = t.Type.Name;
+            Price = t.Type.Price;
+        }
+
+        public string EventName { get; set; }
+        public string TicketTypeName { get; set; }
+        public long Price { get; set; }
+
+    }
 }

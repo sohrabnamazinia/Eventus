@@ -30,4 +30,25 @@ namespace ArsamBackend.ViewModels
         public List<TicketOutputViewModel> Tickets { get; set; }
 
     }
+
+    public class TicketTypeEventViewModel
+    {
+        public TicketTypeEventViewModel(TicketType tt)
+        {
+            Name = tt.Name;
+            Description = tt.Description;
+            Price = tt.Price;
+            Count = tt.Count;
+            Capacity = tt.Capacity;
+            Users = tt.Tickets.Select(x => x.User.UserName).ToList();
+
+        }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public long Price { get; set; }
+        public long Count { get; set; }
+        public long Capacity { get; set; }
+        public List<string> Users { get; set; }
+
+    }
 }
