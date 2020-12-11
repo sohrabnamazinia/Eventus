@@ -66,11 +66,11 @@ namespace ArsamBackend.ViewModels
             Categories = CategoryService.ConvertCategoriesToList(Event.Categories);
             Tasks = Event.Tasks.OrderBy(x => x.Order).Select(x => new OutputTaskViewModel(x)).ToList();
             MyRole = userRole?.ToString();
+            TicketTypes = Event.TicketTypes?.Select(x => new TicketTypeEventViewModel(x)).ToList();
         }
        
         public string Name { get; set; }
         public int Id { get; set; }
-        
         public bool IsProject { get; set; }
 
         public string Description { get; set; }
@@ -92,6 +92,7 @@ namespace ArsamBackend.ViewModels
         public List<string> Images { get; set; }
 
         public EventOutputAppUserViewModel Creator { get; set; }
+        public ICollection<TicketTypeEventViewModel> TicketTypes { get; set; }
 
         public List<int> Categories { get; set; }
 
@@ -123,6 +124,8 @@ namespace ArsamBackend.ViewModels
             Creator = ev.Creator.UserName;
             Categories = CategoryService.ConvertCategoriesToList(ev.Categories);
             EventMembers = ev.EventMembers.Select(x => x.UserName).ToList();
+            EventTicketTypes = ev.TicketTypes.Select(x => x.Name).ToList();
+            EventTickets = ev.Tickets.Select(x => x.User.UserName).ToList();
         }
 
         public string Name { get; set; }
@@ -134,5 +137,7 @@ namespace ArsamBackend.ViewModels
         public string Creator { get; set; }
         public List<int> Categories { get; set; }
         public List<string> EventMembers { get; set; }
+        public List<string> EventTicketTypes { get; set; }
+        public List<string> EventTickets { get; set; }
     }
 }
