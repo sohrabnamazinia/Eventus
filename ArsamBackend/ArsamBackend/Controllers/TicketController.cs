@@ -47,7 +47,7 @@ namespace ArsamBackend.Controllers
             var ev = _context.Events.Find(model.EventId);
             if (ev == null) return NotFound("Event not found!");
             if (ev.Creator != requestedUser) return StatusCode(403, "not allowed to create Ticket Type for this event!");
-            if (model.Capacity <= 0) return BadRequest("Capacity must be positive!");
+            if (model.Capacity <= 0 || model.Price < 0) return BadRequest("Capacity must be positive!");
 
             var type = new TicketType()
             {
@@ -143,7 +143,7 @@ namespace ArsamBackend.Controllers
             var tt = _context.TicketTypes.Find(ttId);
             if (tt == null) return NotFound("Ticket type not found!");
             var ev = tt.Event;
-            if ((requestedUser != ev.Creator) && ev.IsPrivate) return StatusCode(403, "Access Denied");
+            if (requestedUser != ev.Creator) return StatusCode(403, "Access Denied");
             return tt.Tickets.Select(x => new TicketOutputViewModel(x)).ToList();
         }
 
@@ -153,7 +153,7 @@ namespace ArsamBackend.Controllers
             AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var ev = _context.Events.Find(id);
             if (ev == null) return NotFound("Ticket type not found!");
-            if ((requestedUser != ev.Creator) && ev.IsPrivate) return StatusCode(403, "Access Denied");
+            if (requestedUser != ev.Creator) return StatusCode(403, "Access Denied");
             return ev.Tickets.Select(x => new TicketOutputViewModel(x)).ToList();
         }
 
