@@ -59,7 +59,9 @@ namespace ArsamBackend.Controllers
                 var user = new AppUser
                 {
                     UserName = model.EmailAddress,
-                    Email = model.EmailAddress
+                    Email = model.EmailAddress,
+                    FirstName = model.FirstName,
+                    LastName = model.LastName
                 };
 
                 var result = await userManager.CreateAsync(user, model.Password);
