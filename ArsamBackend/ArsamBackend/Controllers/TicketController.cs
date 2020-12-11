@@ -48,7 +48,8 @@ namespace ArsamBackend.Controllers
             if (ev == null) return NotFound("Event not found!");
             var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
             if (!(requestedUserRole == Role.Member)) return StatusCode(403, "Access Denied");
-            if (model.Capacity <= 0) return BadRequest("Capacity must be positive!");
+            if (model.Capacity <= 0 || model.Price < 0) return BadRequest("Capacity must be positive!");
+
 
             var type = new TicketType()
             {
