@@ -149,6 +149,7 @@ namespace ArsamBackend.Controllers
             existEvent.IsLimitedMember = incomeEvent.IsLimitedMember;
             existEvent.MaximumNumberOfMembers = incomeEvent.MaximumNumberOfMembers;
             existEvent.Categories = CategoryService.BitWiseOr(incomeEvent.Categories);
+            existEvent.BuyingTicketEnabled = incomeEvent.BuyingTicketEnabled;
 
             await _context.SaveChangesAsync();
 

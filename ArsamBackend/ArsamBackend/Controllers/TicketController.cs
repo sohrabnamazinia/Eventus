@@ -46,7 +46,8 @@ namespace ArsamBackend.Controllers
             AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var ev = _context.Events.Find(model.EventId);
             if (ev == null) return NotFound("Event not found!");
-            if (ev.Creator != requestedUser) return StatusCode(403, "not allowed to create Ticket Type for this event!");
+            var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
+            if (!(requestedUserRole == Role.Member)) return StatusCode(403, "Access Denied");
             if (model.Capacity <= 0) return BadRequest("Capacity must be positive!");
 
             var type = new TicketType()
@@ -76,6 +77,7 @@ namespace ArsamBackend.Controllers
             if (requestedUser != user) return Conflict("users can not buy tickets for others!");
             if (ev == null) return NotFound("Event not found!");
             if (user == null) return NotFound("User not found!");
+            if (!ev.BuyingTicketEnabled) return StatusCode(403, "Currently, this event does not sell tickets!");
 
             var t = new Ticket();
             t.Event = ev;
@@ -111,7 +113,8 @@ namespace ArsamBackend.Controllers
             var tt = _context.TicketTypes.Find(ttId);
             if (tt == null) return NotFound("Ticket type not found!");
             var ev = tt.Event;
-            if (ev.Creator != requestedUser) return StatusCode(403, "creator of an event can delete a ticket type of that!");
+            var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
+            if (!(requestedUserRole == Role.Member)) return StatusCode(403, "Access Denied");
             if (tt.Tickets.Count != 0) return BadRequest("There are tickets of this type, you must first remove them!");
             _context.TicketTypes.Remove(tt);
             _context.SaveChanges();
@@ -123,8 +126,10 @@ namespace ArsamBackend.Controllers
         {
             AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var tt = _context.TicketTypes.Find(model.Id);
+            var ev = tt.Event;
             if (tt == null) return NotFound("Ticket type not found!");
-            if (tt.Event.Creator != requestedUser) return StatusCode(403, "the creator of the event of this ticket type is just allowd to update it");
+            var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
+            if (!(requestedUserRole == Role.Member)) return StatusCode(403, "Access Denied");
             if (model.Capacity != null && model.Capacity <= 0) return BadRequest("Capacity must be positive!");
             if (model.Price != null && model.Price < 0) return BadRequest("Price must be positive!");
             tt.Capacity = model.Capacity == null ? tt.Capacity : (long) model.Capacity;
@@ -143,7 +148,8 @@ namespace ArsamBackend.Controllers
             var tt = _context.TicketTypes.Find(ttId);
             if (tt == null) return NotFound("Ticket type not found!");
             var ev = tt.Event;
-            if ((requestedUser != ev.Creator) && ev.IsPrivate) return StatusCode(403, "Access Denied");
+            var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
+            if (!(requestedUserRole == Role.Member)) return StatusCode(403, "Access Denied");
             return tt.Tickets.Select(x => new TicketOutputViewModel(x)).ToList();
         }
 
@@ -153,7 +159,8 @@ namespace ArsamBackend.Controllers
             AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var ev = _context.Events.Find(id);
             if (ev == null) return NotFound("Ticket type not found!");
-            if ((requestedUser != ev.Creator) && ev.IsPrivate) return StatusCode(403, "Access Denied");
+            var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
+            if (!(requestedUserRole == Role.Member)) return StatusCode(403, "Access Denied");
             return ev.Tickets.Select(x => new TicketOutputViewModel(x)).ToList();
         }
 
@@ -173,7 +180,8 @@ namespace ArsamBackend.Controllers
             AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var ev = _context.Events.Find(id);
             if (ev == null) return NotFound("Ticket type not found!");
-            if ((requestedUser != ev.Creator) && ev.IsPrivate) return StatusCode(403, "Access Denied");
+            var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
+            if (!(requestedUserRole == Role.Member) && ev.IsPrivate) return StatusCode(403, "Access Denied");
             return ev.TicketTypes.Select(x => new TicketTypeOutputViewModel(x)).ToList();
         }
     }

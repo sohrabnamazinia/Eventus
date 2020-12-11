@@ -40,6 +40,7 @@ namespace ArsamBackend.ViewModels
         public bool IsLimitedMember { get; set; }
 
         public int MaximumNumberOfMembers { get; set; }
+        public bool BuyingTicketEnabled { get; set; }
 
         public List<int> Categories { get; set; }
 

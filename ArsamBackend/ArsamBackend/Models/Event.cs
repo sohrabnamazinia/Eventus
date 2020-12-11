@@ -40,6 +40,7 @@ namespace ArsamBackend.Models
 
         [Required]
         public bool IsLimitedMember { get; set; }
+        public bool BuyingTicketEnabled { get; set; }
 
         public int MaximumNumberOfMembers { get; set; }
         
