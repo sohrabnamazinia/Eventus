@@ -66,7 +66,7 @@ namespace ArsamBackend.ViewModels
             Categories = CategoryService.ConvertCategoriesToList(Event.Categories);
             Tasks = Event.Tasks.OrderBy(x => x.Order).Select(x => new OutputTaskViewModel(x)).ToList();
             MyRole = userRole?.ToString();
-            TicketTypes = Event.TicketTypes.Select(x => new TicketTypeEventViewModel(x)).ToList();
+            TicketTypes = Event.TicketTypes?.Select(x => new TicketTypeEventViewModel(x)).ToList();
         }
        
         public string Name { get; set; }

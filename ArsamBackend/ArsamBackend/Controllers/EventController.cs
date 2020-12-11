@@ -118,7 +118,7 @@ namespace ArsamBackend.Controllers
 
             if (userRole == Role.Admin)
             {
-                List<AppUser> admins = _context.EventUserRole.Where(x => x.EventId == id && x.Role == Role.Admin)
+                List<AppUser> admins = _context.EventUserRole.Where(x => x.EventId == id && x.Role == Role.Admin && !x.IsDeleted)
                     .Select(x => x.AppUser).ToList();
                 AdminOutputEventViewModel adminResult = new AdminOutputEventViewModel(resultEvent, admins, userRole);
                 return Ok(adminResult);
@@ -321,13 +321,8 @@ namespace ArsamBackend.Controllers
             else if (userRoleInDb.IsDeleted)
             {
                 _context.EventUserRole.Remove(userRoleInDb);//remove last information 
-                var memberRoleRequest = new EventUserRole() { AppUser = requestedUser, AppUserId = requestedUser.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member, Status = UserRoleStatus.Pending };
-                await _context.EventUserRole.AddAsync(memberRoleRequest);
-                var membersList = existEvent.EventMembers.ToList();
-                membersList.Add(member);
-                existEvent.EventMembers = membersList;
                 await _context.SaveChangesAsync();
-                return Ok("your request has been sent");
+                return await PromoteMember(id, memberEmail);
             }
             else if (userRoleInDb.Role == Role.Admin)
             {
