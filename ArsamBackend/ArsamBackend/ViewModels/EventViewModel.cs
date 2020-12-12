@@ -18,7 +18,7 @@ namespace ArsamBackend.ViewModels
 
         [Required]
         public string Name { get; set; }
-        
+
         [Required]
         public bool IsProject { get; set; }
 
@@ -32,7 +32,7 @@ namespace ArsamBackend.ViewModels
         [Required]
         [DataType(DataType.Date)]
         public DateTime StartDate { get; set; }
-        
+
         [DataType(DataType.Date)]
         public DateTime EndDate { get; set; }
 
@@ -41,9 +41,11 @@ namespace ArsamBackend.ViewModels
 
         public int MaximumNumberOfMembers { get; set; }
 
+        public bool BuyingTicketEnabled { get; set; }
+
         public List<int> Categories { get; set; }
 
-       
+
     }
 
     public class OutputEventViewModel
@@ -67,8 +69,9 @@ namespace ArsamBackend.ViewModels
             Tasks = Event.Tasks.OrderBy(x => x.Order).Select(x => new OutputTaskViewModel(x)).ToList();
             MyRole = userRole?.ToString();
             TicketTypes = Event.TicketTypes?.Select(x => new TicketTypeEventViewModel(x)).ToList();
+            BuyingTicketEnabled = Event.BuyingTicketEnabled;
         }
-       
+
         public string Name { get; set; }
         public int Id { get; set; }
         public bool IsProject { get; set; }
@@ -99,6 +102,9 @@ namespace ArsamBackend.ViewModels
         public List<OutputTaskViewModel> Tasks { get; set; }
 
         public string MyRole { get; set; }
+
+        public bool BuyingTicketEnabled { get; set; }
+
     }
 
     public class AdminOutputEventViewModel : OutputEventViewModel
@@ -126,6 +132,7 @@ namespace ArsamBackend.ViewModels
             EventMembers = ev.EventMembers.Select(x => x.UserName).ToList();
             EventTicketTypes = ev.TicketTypes.Select(x => x.Name).ToList();
             EventTickets = ev.Tickets.Select(x => x.User.UserName).ToList();
+            BuyingTicketEnabled = ev.BuyingTicketEnabled;
         }
 
         public string Name { get; set; }
@@ -139,5 +146,7 @@ namespace ArsamBackend.ViewModels
         public List<string> EventMembers { get; set; }
         public List<string> EventTicketTypes { get; set; }
         public List<string> EventTickets { get; set; }
+        public bool BuyingTicketEnabled { get; set; }
+
     }
 }

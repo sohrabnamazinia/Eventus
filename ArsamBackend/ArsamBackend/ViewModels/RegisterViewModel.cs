@@ -19,6 +19,8 @@ namespace ArsamBackend.ViewModels
         [DataType(DataType.Password)]
         [Compare("Password")]
         public string PasswordConfirmation { get; set; }
-            
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+
     }
 }
