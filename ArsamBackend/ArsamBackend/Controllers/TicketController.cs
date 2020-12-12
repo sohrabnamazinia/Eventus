@@ -47,7 +47,7 @@ namespace ArsamBackend.Controllers
             var ev = _context.Events.Find(model.EventId);
             if (ev == null) return NotFound("Event not found!");
             var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
-            if (!(requestedUserRole == Role.Member)) return StatusCode(403, "Access Denied");
+            if (!(requestedUserRole == Role.Admin)) return StatusCode(403, "Access Denied");
             if (model.Capacity <= 0 || model.Price < 0) return BadRequest("Capacity must be positive!");
 
 
@@ -115,7 +115,7 @@ namespace ArsamBackend.Controllers
             if (tt == null) return NotFound("Ticket type not found!");
             var ev = tt.Event;
             var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
-            if (!(requestedUserRole == Role.Member)) return StatusCode(403, "Access Denied");
+            if (!(requestedUserRole == Role.Admin)) return StatusCode(403, "Access Denied");
             if (tt.Tickets.Count != 0) return BadRequest("There are tickets of this type, you must first remove them!");
             _context.TicketTypes.Remove(tt);
             _context.SaveChanges();
@@ -130,7 +130,7 @@ namespace ArsamBackend.Controllers
             var ev = tt.Event;
             if (tt == null) return NotFound("Ticket type not found!");
             var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
-            if (!(requestedUserRole == Role.Member)) return StatusCode(403, "Access Denied");
+            if (!(requestedUserRole == Role.Admin)) return StatusCode(403, "Access Denied");
             if (model.Capacity != null && model.Capacity <= 0) return BadRequest("Capacity must be positive!");
             if (model.Price != null && model.Price < 0) return BadRequest("Price must be positive!");
             tt.Capacity = model.Capacity == null ? tt.Capacity : (long) model.Capacity;
@@ -150,7 +150,7 @@ namespace ArsamBackend.Controllers
             if (tt == null) return NotFound("Ticket type not found!");
             var ev = tt.Event;
             var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
-            if (!(requestedUserRole == Role.Member)) return StatusCode(403, "Access Denied");
+            if (!(requestedUserRole == Role.Admin)) return StatusCode(403, "Access Denied");
             return tt.Tickets.Select(x => new TicketOutputViewModel(x)).ToList();
         }
 
@@ -161,7 +161,7 @@ namespace ArsamBackend.Controllers
             var ev = _context.Events.Find(id);
             if (ev == null) return NotFound("Ticket type not found!");
             var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
-            if (!(requestedUserRole == Role.Member)) return StatusCode(403, "Access Denied");
+            if (!(requestedUserRole == Role.Admin)) return StatusCode(403, "Access Denied");
             return ev.Tickets.Select(x => new TicketOutputViewModel(x)).ToList();
         }
 
@@ -182,7 +182,7 @@ namespace ArsamBackend.Controllers
             var ev = _context.Events.Find(id);
             if (ev == null) return NotFound("Ticket type not found!");
             var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
-            if (!(requestedUserRole == Role.Member) && ev.IsPrivate) return StatusCode(403, "Access Denied");
+            if (!(requestedUserRole == Role.Admin) && ev.IsPrivate) return StatusCode(403, "Access Denied");
             return ev.TicketTypes.Select(x => new TicketTypeOutputViewModel(x)).ToList();
         }
     }
