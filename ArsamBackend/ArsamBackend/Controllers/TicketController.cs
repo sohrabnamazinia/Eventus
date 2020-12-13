@@ -50,7 +50,6 @@ namespace ArsamBackend.Controllers
             if (!(requestedUserRole == Role.Admin)) return StatusCode(403, "Access Denied");
             if (model.Capacity <= 0 || model.Price < 0) return BadRequest("Capacity must be positive!");
 
-
             var type = new TicketType()
             {
                 Name = model.Name,
@@ -79,7 +78,8 @@ namespace ArsamBackend.Controllers
             if (ev == null) return NotFound("Event not found!");
             if (user == null) return NotFound("User not found!");
             if (!ev.BuyingTicketEnabled) return StatusCode(403, "Currently, this event does not sell tickets!");
-
+            if (user.Balance < tt.Price) return StatusCode(403, "balance not sufficient");
+            user.Balance -= tt.Price;
             var t = new Ticket();
             t.Event = ev;
             t.User = user;
@@ -91,8 +91,6 @@ namespace ArsamBackend.Controllers
             _context.SaveChanges();
             return Ok(new TicketOutputViewModel(t));
         }
-
-
 
         [HttpDelete]
         public async Task<IActionResult> DeleteTicket([FromBody] int tId)

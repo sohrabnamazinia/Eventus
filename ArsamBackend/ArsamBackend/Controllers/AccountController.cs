@@ -308,6 +308,19 @@ namespace ArsamBackend.Controllers
             return Ok(new OutputAppUserViewModel(user));
         }
 
+        [Authorize]
+        [HttpPut]
+        public async Task<IActionResult> ChargeAccount(long amount)
+        {
+            if (amount <= 0) return BadRequest("charge amount must be positive!");
+            if (amount > 1000000000) return BadRequest("charge amount must be smaller than 1 billion dollars!");
+            AppUser user = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            user.Balance += amount;
+            _context.SaveChanges();
+            return Ok(new OutputAppUserViewModel(user));
+        }
+
+
     }
     
 }
