@@ -64,7 +64,7 @@ namespace ArsamBackend.ViewModels
             MaximumNumberOfMembers = Event.MaximumNumberOfMembers;
             EventMembers = Event.EventMembers.Select(x => new EventOutputAppUserViewModel(x)).ToList();
             Creator = new EventOutputAppUserViewModel(Event.Creator);
-            Images = Event.Images.Select(x => Convert.ToBase64String(File.ReadAllBytes(Path.GetFullPath(Constants.EventImagesPath) + x.FileName))).ToList();
+            Images = Event.Images.Select(x => new OutputEventImageViewModel(x)).ToList();
             Categories = CategoryService.ConvertCategoriesToList(Event.Categories);
             Tasks = Event.Tasks.OrderBy(x => x.Order).Select(x => new OutputTaskViewModel(x)).ToList();
             MyRole = userRole?.ToString();
@@ -92,9 +92,10 @@ namespace ArsamBackend.ViewModels
 
         public List<EventOutputAppUserViewModel> EventMembers { get; set; }
 
-        public List<string> Images { get; set; }
+        public List<OutputEventImageViewModel> Images { get; set; }
 
         public EventOutputAppUserViewModel Creator { get; set; }
+
         public ICollection<TicketTypeEventViewModel> TicketTypes { get; set; }
 
         public List<int> Categories { get; set; }
