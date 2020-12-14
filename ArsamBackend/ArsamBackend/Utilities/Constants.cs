@@ -20,11 +20,11 @@ namespace ArsamBackend.Utilities
         public const string ImageNotFound = "Image not found!";
         public const string EventImagesPath = ("Images/Events/");
         public const string UserImagesPath = ("Images/Users/");
-        public const int MaxImageSizeByte = 10000;
-        public static readonly byte[] png = new byte[] { 137, 80, 78, 71 };    
-        public static readonly  byte[] tiff = new byte[] { 73, 73, 42 };        
-        public static readonly byte[] tiff2 = new byte[] { 77, 77, 42 };        
-        public static readonly byte[] jpeg = new byte[] { 255, 216, 255, 224 }; 
+        public const int MaxImageSizeByte = 500000;
+        public static readonly byte[] png = new byte[] { 137, 80, 78, 71 };
+        public static readonly byte[] tiff = new byte[] { 73, 73, 42 };
+        public static readonly byte[] tiff2 = new byte[] { 77, 77, 42 };
+        public static readonly byte[] jpeg = new byte[] { 255, 216, 255, 224 };
         public static readonly byte[] jpeg2 = new byte[] { 255, 216, 255, 225 };
         public static readonly string jpg;
         public static readonly string jfif;
@@ -50,7 +50,7 @@ namespace ArsamBackend.Utilities
         }
     }
 
-    
 
-    
+
+
 }

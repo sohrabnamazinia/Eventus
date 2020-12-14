@@ -65,42 +65,156 @@ namespace ArsamBackend.Controllers
             if (!(requestedUser == existEvent.Creator || userRole == Role.Admin))
                 return StatusCode(403, "access denied");
 
-            var req = Request.Form.Files;
-
+            var files = Request.Form.Files;
+            if (files.Count + existEvent.Images.Count > 5) return BadRequest("can not add more than 5 image to each event");
 
             string path = Constants.EventImagesPath;
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
 
-            foreach (var file in req)
+            foreach (var file in files)
             {
                 if (file != null && file.Length > 0)
                 {
-                    if (!file.ContentType.ToLower().Contains("image"))
-                        return StatusCode(415, "Unsupported Media Type, only image types can be added to Events");
-
-                    var fileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(file.FileName);
-                    await using (var fileStream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
+                    using (var ms = new MemoryStream())
                     {
-                        await file.CopyToAsync(fileStream);
+                        file.CopyTo(ms);
+                        var fileBytes = ms.ToArray();
+                        if (!Constants.FileFormatChecker(fileBytes) ||
+                            !Constants.CheckFileNameExtension(Path.GetExtension(file.FileName)))
+                            return StatusCode(415, "one of file contents is not a valid format!");
                     }
 
-                    var image = new EventImage()
-                    {
-                        EventId = eventId,
-                        Event = existEvent,
-                        FileName = fileName,
-                        ContentType = file.ContentType
-                    };
-                    existEvent.Images.Add(image);
-                    await _context.SaveChangesAsync();
+                    if (existEvent.Images.Count >= 5)
+                        return BadRequest("can not add more than 5 image to each event");
+
+                    if (file.Length > 5 * Math.Pow(10, 6))
+                        return BadRequest("image size limit is 5 mg");
                 }
                 else
                     return BadRequest("image not found");
             }
+            foreach (var file in files)
+            {
+                var fileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(file.FileName);
+                await using (var fileStream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                var image = new EventImage()
+                {
+                    EventId = eventId,
+                    Event = existEvent,
+                    FileName = fileName,
+                    ContentType = file.ContentType
+                };
+                existEvent.Images.Add(image);
+                await _context.SaveChangesAsync();
+            }
+
             var result = new OutputEventViewModel(existEvent);
             return Ok(result);
 
+        }
+
+        [Authorize]
+        [HttpPut]
+        public async Task<ActionResult> UpdateImage(int eventId, int imageId)
+        {
+            Event existEvent = await _context.Events.FindAsync(eventId);
+            if (existEvent == null || existEvent.IsDeleted)
+                return NotFound("no event found by this id: " + eventId);
+
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], eventId);
+            if (userRole != Role.Admin)
+                return StatusCode(403, "access denied");
+
+            var files = Request.Form.Files;
+            if (files.Count != 1) return BadRequest(Constants.OneImageRequiredError);
+
+            var newFile = files[0];
+
+            string path = Constants.EventImagesPath;
+            if (!Directory.Exists(path))
+                return NotFound("can not find image directory");
+
+
+            if (newFile != null && newFile.Length > 0)
+            {
+                using (var ms = new MemoryStream())
+                {
+                    newFile.CopyTo(ms);
+                    var fileBytes = ms.ToArray();
+                    if (!Constants.FileFormatChecker(fileBytes) || !Constants.CheckFileNameExtension(Path.GetExtension(newFile.FileName))) return StatusCode(415, "File content is not a valid format!");
+                }
+
+                if (newFile.Length > 5 * Math.Pow(10, 6))
+                    return BadRequest("image size limit is 5 mg");
+
+                EventImage oldImage = existEvent.Images.SingleOrDefault(x => x.Id == imageId);
+                if (oldImage == null) return NotFound("no image found by this imageId");
+
+                string oldImagePath = path + oldImage.FileName;
+
+                string newFileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(newFile.FileName);
+
+                if (System.IO.File.Exists(oldImagePath))
+                {
+                    await using (var fileStream = new FileStream(Path.Combine(path, newFileName), FileMode.Create))
+                        await newFile.CopyToAsync(fileStream);
+
+                    System.IO.File.Delete(oldImagePath);
+                }
+                else
+                    return NotFound("can not find image");
+
+                oldImage.FileName = newFileName;
+                oldImage.ContentType = newFile.ContentType;
+
+                await _context.SaveChangesAsync();
+            }
+            else
+                return BadRequest("image not found");
+
+            var result = new OutputEventViewModel(existEvent);
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpDelete]
+        public async Task<ActionResult> DeleteImage(int eventId, int imageId)
+        {
+
+            Event existEvent = await _context.Events.FindAsync(eventId);
+            if (existEvent == null || existEvent.IsDeleted)
+                return NotFound("no event found by this id: " + eventId);
+
+            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], eventId);
+            if (userRole != Role.Admin)
+                return StatusCode(403, "access denied");
+
+
+            string path = Constants.EventImagesPath;
+            if (!Directory.Exists(path))
+                return NotFound("can not find image directory");
+
+
+            EventImage oldImage = existEvent.Images.SingleOrDefault(x => x.Id == imageId);
+            if (oldImage == null) return NotFound("no image found by this imageId");
+
+            string oldImagePath = path + oldImage.FileName;
+
+            if (System.IO.File.Exists(oldImagePath))
+                System.IO.File.Delete(oldImagePath);
+            else
+                return NotFound("can not find image");
+
+            _context.EventImages.Remove(oldImage);
+            await _context.SaveChangesAsync();
+
+            var result = new OutputEventViewModel(existEvent);
+            return Ok(result);
         }
 
         [Authorize]
@@ -161,7 +275,7 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
-            
+
             Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
             if (existEvent == null || existEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
@@ -286,7 +400,6 @@ namespace ArsamBackend.Controllers
         public async Task<ActionResult> PromoteMember(int id, string memberEmail)
         {
             AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-
             Event existEvent = await _context.Events.FindAsync(id);
 
             if (existEvent == null || existEvent.IsDeleted)
@@ -303,7 +416,7 @@ namespace ArsamBackend.Controllers
             if (member == requestedUser)
                 return BadRequest("you can not make yourself a member , you are an admin");
 
-           
+
             if (existEvent.IsLimitedMember)
                 if (existEvent.EventMembers.Count() >= existEvent.MaximumNumberOfMembers)
                     return BadRequest("Event is full");
@@ -313,9 +426,7 @@ namespace ArsamBackend.Controllers
             {
                 var memberRole = new EventUserRole() { AppUser = member, AppUserId = member.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member };
                 await _context.EventUserRole.AddAsync(memberRole);
-                var membersList = existEvent.EventMembers.ToList();
-                membersList.Add(member);
-                existEvent.EventMembers = membersList;
+                existEvent.EventMembers.Add(member);
                 await _context.SaveChangesAsync();
                 return Ok("member added");
             }
@@ -328,9 +439,7 @@ namespace ArsamBackend.Controllers
             else if (userRoleInDb.Role == Role.Admin)
             {
                 userRoleInDb.Role = Role.Member;
-                var membersList = existEvent.EventMembers.ToList();
-                membersList.Add(member);
-                existEvent.EventMembers = membersList;
+                existEvent.EventMembers.Add(member);
                 await _context.SaveChangesAsync();
                 return Ok("this admin demoted to member");
             }
@@ -340,9 +449,7 @@ namespace ArsamBackend.Controllers
             }
             else if (userRoleInDb.Role == Role.Member && userRoleInDb.Status != UserRoleStatus.Accepted)
             {
-                var membersList = existEvent.EventMembers.ToList();
-                membersList.Add(member);
-                existEvent.EventMembers = membersList;
+                existEvent.EventMembers.Add(member);
                 userRoleInDb.Status = UserRoleStatus.Accepted;
                 await _context.SaveChangesAsync();
                 return Ok("user request accepted and this user is a member now");
@@ -372,11 +479,7 @@ namespace ArsamBackend.Controllers
                 return BadRequest("this user don't have any role in Event");
 
             if (userRoleInDb.Role == Role.Member)
-            {
-                var membersList = existEvent.EventMembers.ToList();
-                membersList.Remove(user);
-                existEvent.EventMembers = membersList;
-            }
+                existEvent.EventMembers.Remove(user);
 
             userRoleInDb.IsDeleted = true;
             await _context.SaveChangesAsync();
@@ -388,7 +491,7 @@ namespace ArsamBackend.Controllers
         public async Task<ActionResult> Leave(int id)
         {
             AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-           
+
             Event existEvent = await _context.Events.FindAsync(id);
             if (existEvent == null || existEvent.IsDeleted)
                 return StatusCode(404, "event not found");
@@ -398,11 +501,8 @@ namespace ArsamBackend.Controllers
                 return BadRequest("you don't have any role in this Event");
 
             if (userRoleInDb.Role == Role.Member)
-            {
-                var membersList = existEvent.EventMembers.ToList();
-                membersList.Remove(requestedUser);
-                existEvent.EventMembers = membersList;
-            }
+                existEvent.EventMembers.Remove(requestedUser);
+            
             userRoleInDb.IsDeleted = true;
             await _context.SaveChangesAsync();
             return Ok("you left the Event successfully");
@@ -424,15 +524,13 @@ namespace ArsamBackend.Controllers
             if (member == null)
                 return StatusCode(404, "Member not found");
 
-           
+
             if (!existEvent.EventMembers.Contains(member))
                 return StatusCode(403, "access denied, only members can be promote to admin");
 
             var userRoleInDb = await _context.EventUserRole.FindAsync(member.Id, existEvent.Id);
             userRoleInDb.Role = Role.Admin;
-            var membersList = existEvent.EventMembers.ToList();
-            membersList.Remove(member);
-            existEvent.EventMembers = membersList;
+            existEvent.EventMembers.Remove(member);
             await _context.SaveChangesAsync();
 
             return Ok("member promoted");
@@ -443,8 +541,8 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult<ICollection<Event>>> Filter(FilterEventsViewModel model, [FromQuery] PaginationParameters pagination)
         {
-            
-            if ((model.DateMax != null && model.DateMin != null) && DateTime.Compare((DateTime) model.DateMin, (DateTime) model.DateMax) >= 0) return BadRequest("Date interval is negative");
+
+            if ((model.DateMax != null && model.DateMin != null) && DateTime.Compare((DateTime)model.DateMin, (DateTime)model.DateMax) >= 0) return BadRequest("Date interval is negative");
             var FilteredEvents = await _eventService.FilterEvents(model, pagination);
             List<OutputEventViewModel> outModels = new List<OutputEventViewModel>();
             foreach (var ev in FilteredEvents) outModels.Add(new OutputEventViewModel(ev));
