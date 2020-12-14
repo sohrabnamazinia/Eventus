@@ -178,7 +178,7 @@ namespace ArsamBackend.Controllers
         {
             AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var ev = _context.Events.Find(id);
-            if (ev == null) return NotFound("Ticket type not found!");
+            if (ev == null) return NotFound("Event not found!");
             var requestedUserRole = _jWTHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], ev.Id);
             if (!(requestedUserRole == Role.Admin) && ev.IsPrivate) return StatusCode(403, "Access Denied");
             return ev.TicketTypes.Select(x => new TicketTypeOutputViewModel(x)).ToList();

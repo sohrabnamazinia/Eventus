@@ -12,13 +12,15 @@ namespace ArsamBackend.ViewModels
         {
             Id = ticket.Id;
             Event = ticket.EventId;
-            Type = ticket.TicketTypeId;
+            Type = ticket.Type.Name;
             User = ticket.User.UserName;
+            TypeId = ticket.Type.ID;
         }
 
         public int Id { get; set; }
         public int Event { get; set; }
-        public int? Type { get; set; }
+        public string Type { get; set; }
+        public int TypeId { get; set; }
         public string User { get; set; }
 
     }
