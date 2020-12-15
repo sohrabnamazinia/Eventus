@@ -6,50 +6,64 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Net.Http.Headers;
 using Xunit;
 
 namespace Eventus.UnitTest
 {
-    public class LoginTest : TestBase
+    public class CreateTest : TestBase
     {
         [Fact]
-        public void Login_Successful_200()
+        public void Create_Successful_200()
         {
             #region Setup
+            
             mockUserManager.Setup(x => x.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync(new AppUser());
             mockSigninManager.Setup(x => x.PasswordSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), true)).ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
             mockJWTHandler.Setup(x => x.GenerateToken(It.IsAny<AppUser>())).Returns("JWT");
+            mockContext.Setup(x => x.User).Returns(new ClaimsPrincipal());
+            //var httpContext = new DefaultHttpContext();
+            //httpContext.Request.Headers[HeaderNames.Authorization] =
+            //    "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJhMkB5YWhvby5jb20iLCIxMDA1OCI6IjIiLCJuYmYiOjE2MDc5MzQzMjksImV4cCI6MTYwODAyMDcyOSwiaWF0IjoxNjA3OTM0MzI5fQ.AzamDCWZf9KrmCROERvAHI_X8IZFsFYT_ASAE3vG-AVoFDWDMnhMR5ppsPfk18G-t3v2M7pAUHdEAw8jKTm0aA";
             #endregion Setup
+
             var controllerContext = new ControllerContext()
             {
-                HttpContext = mockContext.Object
+                HttpContext = mockContext.Object,
             };
-            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockAccountLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object)
+
+            var controller = new EventController(mockJWTHandler.Object, context, mockEventLogger.Object, eventService.Object)
             {
                 ControllerContext = controllerContext,
                 Url = mockUrl.Object
             };
-            for (int i = 0; i < 100; i++)
-            {
-                var Pass = StringGenerators.CreateRandomString();
-                var RememberMes = new bool[] { true, false };
-                var model = new LoginViewModel()
-                {
-                    Email = StringGenerators.CreateRandomString() + "@" + StringGenerators.CreateRandomString() + ".com",
-                    Password = Pass,
-                    RememberMe = RememberMes[new Random().Next(1)]
-                };
-                Task<IActionResult> result = controller.Login(model);
-                Tuple<dynamic, int?> responseBodyStatusCode = getResponse_200(result);
-                var Token = responseBodyStatusCode.Item1.token.Value;
-                var code = responseBodyStatusCode.Item2.Value;
 
-                #region Assertions
-                Assert.Equal("JWT", Token);
-                Assert.Equal(200, code);
-                #endregion Assertions
-            }
+            var model = new InputEventViewModel()
+            {
+                Name = StringGenerators.CreateRandomString(),
+                IsProject = true,
+                Description = StringGenerators.CreateRandomString(),
+                IsPrivate = true,
+                StartDate = DateTime.Now,
+                EndDate = DateTime.Now.AddDays(2),
+                IsLimitedMember = true,
+                MaximumNumberOfMembers = 10,
+                Categories = new List<int> { 1, 4, 8 }
+            };
+            Task<ActionResult> result = controller.Create(model);
+            Tuple<dynamic, int?> responseBodyStatusCode = getResponse_200(result);
+            var Token = responseBodyStatusCode.Item1.token.Value;
+            var code = responseBodyStatusCode.Item2.Value;
+
+            #region Assertions
+            Assert.Equal("JWT", Token);
+            Assert.Equal(200, code);
+            #endregion Assertions
+
         }
 
         [Fact]
@@ -197,9 +211,9 @@ namespace Eventus.UnitTest
             }
         }
 
-        
 
-        public Tuple<dynamic, int?> getResponse_200(Task<IActionResult> result)
+
+        public Tuple<dynamic, int?> getResponse_200(Task<ActionResult> result)
         {
             OkObjectResult actionResult = (OkObjectResult)result.Result;
             var code = actionResult.StatusCode;
