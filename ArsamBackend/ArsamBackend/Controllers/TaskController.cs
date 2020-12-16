@@ -41,7 +41,7 @@ namespace ArsamBackend.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(InputTaskViewModel incomeTask)
         {
-            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], incomeTask.EventId);
+            Role? userRole = await jwtHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], incomeTask.EventId, _context);
             if (userRole != Role.Admin)
                 return StatusCode(403, "access denied, you are not an admin");
 
@@ -66,7 +66,7 @@ namespace ArsamBackend.Controllers
 
             if (existTask == null || existTask.IsDeleted)
                 return StatusCode(404, "task not found");
-            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], existTask.EventId);
+            Role? userRole = await jwtHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], incomeTask.EventId, _context);
 
             Event taskEvent = existTask.Event;
 
@@ -102,7 +102,7 @@ namespace ArsamBackend.Controllers
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
 
-            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], taskEvent.Id);
+            Role? userRole = await jwtHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], taskEvent.Id, _context);
 
             if (!(taskEvent.EventMembers.Contains(requestedUser) || userRole == Role.Admin))
                 return StatusCode(403, "access denied");
@@ -130,7 +130,7 @@ namespace ArsamBackend.Controllers
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
 
-            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], taskEvent.Id);
+            Role? userRole = await jwtHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], taskEvent.Id, _context);
 
             if (!(taskEvent.EventMembers.Contains(requestedUser) || userRole == Role.Admin))
                 return StatusCode(403, "access denied");
@@ -170,8 +170,8 @@ namespace ArsamBackend.Controllers
 
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
-            
-            Role? userRole = jwtHandler.FindRoleByToken(Request.Headers[HeaderNames.Authorization], taskEvent.Id);
+
+            Role? userRole = await jwtHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], taskEvent.Id, _context);
 
             if (!(taskEvent.EventMembers.Contains(requestedUser) || userRole == Role.Admin))
                 return StatusCode(403, "access denied");
