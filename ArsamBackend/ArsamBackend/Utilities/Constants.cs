@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Minio;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,8 +19,10 @@ namespace ArsamBackend.Utilities
         public const string NotFoundError = "User not found!";
         public const string OneImageRequiredError = "One image must be set!";
         public const string ImageNotFound = "Image not found!";
-        public const string EventImagesPath = ("Images/Events/");
-        public const string UserImagesPath = ("Images/Users/");
+        public const string EventImagesPath = "Images/Events/";
+        public const string UserImagesPath = "Images/Users/";
+        public const string ProjectIpAddressPort = "45.82.136.84:9000";
+        public const int PresignedGetObjectExpirationPeriod = 60 * 60 * 24;
         public const int MaxImageSizeByte = 500000;
         public static readonly byte[] png = new byte[] { 137, 80, 78, 71 };
         public static readonly byte[] tiff = new byte[] { 73, 73, 42 };
@@ -47,6 +50,12 @@ namespace ArsamBackend.Utilities
                 return true;
             }
             return false;
+        }
+
+        public static string GetFileNameExtension(string fileName)
+        {
+            var extension = fileName.Split(".");
+            return extension[extension.Length - 1];
         }
     }
 

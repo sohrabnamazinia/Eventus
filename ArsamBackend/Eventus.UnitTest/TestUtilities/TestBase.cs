@@ -32,6 +32,7 @@ namespace Eventus.UnitTest.TestUtilities
         public JavaScriptSerializer serializer = new JavaScriptSerializer();
         public Mock<IJWTService> jwtService = new Mock<IJWTService>();
         public AppDbContext context = new AppDbContext(new DbContextOptions<AppDbContext>());
+        public Mock<IMinIOService> MockMinio = new Mock<IMinIOService>();
         #endregion mock
     }
 }
