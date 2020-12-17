@@ -30,6 +30,10 @@ namespace ArsamBackend.Models
             modelBuilder.Entity<AppUser>().HasOne(x => x.Image).WithOne(x => x.User).HasForeignKey<UserImage>(x => x.UserId);
             modelBuilder.Entity<EventUserRole>().HasKey(o => new {o.AppUserId, o.EventId});
             modelBuilder.Entity<Ticket>().HasOne(x => x.Type).WithMany(x => x.Tickets).OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Event>().HasQueryFilter(x => EF.Property<bool>(x, "IsDeleted") == false);
+            modelBuilder.Entity<EventUserRole>().HasQueryFilter(x => EF.Property<bool>(x, "IsDeleted") == false);
+            modelBuilder.Entity<Task>().HasQueryFilter(x => EF.Property<bool>(x, "IsDeleted") == false);
         }
 
     }

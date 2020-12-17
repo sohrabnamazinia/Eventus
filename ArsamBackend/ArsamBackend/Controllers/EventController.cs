@@ -302,7 +302,10 @@ namespace ArsamBackend.Controllers
             if (userRole != null)
                 return BadRequest("you are in this event already");
 
-            var userRoleInDb = await _context.EventUserRole.FindAsync(requestedUser.Id, existEvent.Id);
+            
+            var userRoleInDb = await _context.EventUserRole.IgnoreQueryFilters()
+                .SingleOrDefaultAsync(x => x.AppUserId == requestedUser.Id && x.EventId == existEvent.Id);
+
             if (userRoleInDb == null)
             {
                 var memberRoleRequest = new EventUserRole() { AppUser = requestedUser, AppUserId = requestedUser.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member, Status = UserRoleStatus.Pending };
@@ -420,7 +423,8 @@ namespace ArsamBackend.Controllers
                 if (existEvent.EventMembers.Count() >= existEvent.MaximumNumberOfMembers)
                     return BadRequest("Event is full");
 
-            var userRoleInDb = await _context.EventUserRole.FindAsync(member.Id, existEvent.Id);
+            var userRoleInDb = await _context.EventUserRole.IgnoreQueryFilters()
+                           .SingleOrDefaultAsync(x => x.AppUserId == member.Id && x.EventId == existEvent.Id);
             if (userRoleInDb == null)
             {
                 var memberRole = new EventUserRole() { AppUser = member, AppUserId = member.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member };
