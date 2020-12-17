@@ -17,7 +17,7 @@ namespace ArsamBackend.ViewModels
             LastName = user.LastName;
             Description = user.Description;
             Fields = CategoryService.ConvertCategoriesToList(user.Fields);
-            CreatedEvents = user.CreatedEvents.ToList().Select(x => new OutputAbstractViewModel(x)).ToList();
+            AdminInEvents = user.Roles.Where(x => x.Role == Role.Admin).Select(x => new OutputAbstractViewModel(x.Event)).ToList();
             InEvents = user.InEvents.ToList().Select(x => new OutputAbstractViewModel(x)).ToList();
             Image = user.Image == null ? null : Convert.ToBase64String(File.ReadAllBytes(Path.GetFullPath(Constants.UserImagesPath) + user.Image.FileName));
             Tickets = user.Tickets.Select(x => new TicketProfileViewModel(x)).ToList();
@@ -32,7 +32,7 @@ namespace ArsamBackend.ViewModels
         public long Balance { get; set; }
         public ICollection<int> Fields { get; set; }
         public ICollection<OutputAbstractViewModel> InEvents { get; set; }
-        public ICollection<OutputAbstractViewModel> CreatedEvents { get; set; }
+        public ICollection<OutputAbstractViewModel> AdminInEvents { get; set; }
         public ICollection<TicketProfileViewModel> Tickets { get; set; }
 
     }

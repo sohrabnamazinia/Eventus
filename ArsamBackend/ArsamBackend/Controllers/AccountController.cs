@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -284,7 +285,7 @@ namespace ArsamBackend.Controllers
         [Authorize]
         public async Task<IActionResult> GetProfile(string email)
         {
-            var user = await userManager.FindByEmailAsync(email);
+            var user = await _context.Users.Include(x => x.InEvents).SingleOrDefaultAsync(x => x.Email == email);
             if (user == null)
             {
                 return NotFound("User not found");

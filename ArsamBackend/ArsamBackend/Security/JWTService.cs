@@ -49,6 +49,7 @@ namespace ArsamBackend.Security
             var TokenDescriptor = new SecurityTokenDescriptor()
             {
                 Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddYears(1),
                 SigningCredentials = Creds
             };
 
