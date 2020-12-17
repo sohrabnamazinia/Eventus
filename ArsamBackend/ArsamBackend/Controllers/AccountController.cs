@@ -74,7 +74,7 @@ namespace ArsamBackend.Controllers
                     // TODO : Send email 
 
                     _logger.Log(LogLevel.Warning, ConfirmationLink);
-                    return CreatedAtAction(nameof(Register), new { email = user.Email, token = Token });
+                    return CreatedAtAction(nameof(Register), new { email = user.Email, token = Token, confirmationLink = ConfirmationLink });
                 }
                 foreach (var error in result.Errors)
                 {

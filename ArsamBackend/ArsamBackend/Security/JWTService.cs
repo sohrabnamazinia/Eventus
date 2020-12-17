@@ -40,19 +40,15 @@ namespace ArsamBackend.Security
 
             var claims = new List<Claim>()
             {
-                new Claim(JwtRegisteredClaimNames.NameId, user.UserName)
+                new Claim(JwtRegisteredClaimNames.NameId, user.UserName),
+                new Claim( "UserId", user.Id)
             };
 
-            foreach (var role in user.Roles)
-                if (role.Status == UserRoleStatus.Accepted && !role.IsDeleted)
-                    claims.Add(new Claim(role.EventId.ToString(), ((int) role.Role).ToString()));
-            
 
             var TokenHandler = new JwtSecurityTokenHandler();
             var TokenDescriptor = new SecurityTokenDescriptor()
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddDays(1),
                 SigningCredentials = Creds
             };
 
@@ -78,7 +74,7 @@ namespace ArsamBackend.Security
             var userEmail = FindEmailByToken(authorization);
             return await context.Users.SingleOrDefaultAsync(x => x.Email == userEmail);
         }
-        public Role? FindRoleByToken(string authorization, int eventId)
+        public async Task<Role?> FindRoleByTokenAsync(string authorization, int eventId, AppDbContext context)
         {
             string token = string.Empty;
             if (AuthenticationHeaderValue.TryParse(authorization, out var headerValue))
@@ -87,11 +83,11 @@ namespace ArsamBackend.Security
             }
             var tokenHandler = new JwtSecurityTokenHandler();
             var securityToken = tokenHandler.ReadToken(token) as JwtSecurityToken;
-            var role = securityToken.Claims.SingleOrDefault(claim => claim.Type == eventId.ToString());
-            if (role == null)
+            var userId = securityToken.Claims.First(claim => claim.Type == "UserId").Value;
+            if (userId == null)
                 return null;
-            Role userRole = (Role)int.Parse(role.Value);
-            return userRole;
+            var userRole = await context.EventUserRole.FindAsync(userId, eventId);
+            return userRole.Role;
         }
 
         #region utilities
