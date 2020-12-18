@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -39,9 +40,9 @@ namespace ArsamBackend.Controllers
         public readonly JwtSecurityTokenHandler handler;
         private readonly IDataProtector protector;
         private readonly IJWTService _jWTHandler;
-        
+        private readonly IMinIOService minIOService;
 
-        public AccountController(AppDbContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler)
+        public AccountController(AppDbContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler, IMinIOService minIO)
         {
             this._context = context;
             this.userManager = userManager;
@@ -49,6 +50,7 @@ namespace ArsamBackend.Controllers
             this._logger = logger;
             this.protector = dataProtectionProvider.CreateProtector(DataProtectionPurposeStrings.UserIdQueryString);
             this._jWTHandler = jWTHandler;
+            this.minIOService = minIO;
         }
 
         [HttpPost]
@@ -232,59 +234,38 @@ namespace ArsamBackend.Controllers
             if (files.Count != 1) return BadRequest(Constants.OneImageRequiredError);
 
             var ImageFile = files[0];
-            
 
-            string path = Constants.UserImagesPath;
-            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+            if (ImageFile == null || !(ImageFile.Length > 0)) return BadRequest(Constants.ImageNotFound);
 
-            if (ImageFile != null && ImageFile.Length > 0)
+            using (var ms = new MemoryStream())
             {
-                using (var ms = new MemoryStream())
-                {
-                    ImageFile.CopyTo(ms);
-                    var fileBytes = ms.ToArray();
-                    if (!Constants.FileFormatChecker(fileBytes) || !Constants.CheckFileNameExtension(Path.GetExtension(ImageFile.FileName))) return StatusCode(415, "File content is not a valid format!");
-                }
-
-                var ImageSize = ImageFile.Length;
-                if (ImageSize > Constants.MaxImageSizeByte) return BadRequest("File exceeds Maximum size!");
-                var B = ImageFile;
-
-                var ImageFileName = Guid.NewGuid() + "_" + Path.GetFileName(ImageFile.FileName);
-                await using (var fileStream = new FileStream(Path.Combine(path, ImageFileName), FileMode.Create))
-                {
-                    await ImageFile.CopyToAsync(fileStream);
-                }
-
-                var UserImage = new UserImage()
-                {
-                    UserId = user.Id,
-                    FileName = ImageFileName,
-                    ContentType = ImageFile.ContentType
-                };
-                if (user.Image != null)
-                {
-                    var OldImagePath = Constants.UserImagesPath + user.Image.FileName;
-                    if (System.IO.File.Exists(OldImagePath))
-                    {
-                        System.IO.File.Delete(OldImagePath);
-                    }
-                    _context.UsersImage.Remove(user.Image);
-                }
-                user.Image = UserImage;
-                _context.Users.Update(user);
-                await _context.SaveChangesAsync();
-                return Ok(new OutputAppUserViewModel(user));
+                ImageFile.CopyTo(ms);
+                var fileBytes = ms.ToArray();
+                if (!Constants.FileFormatChecker(fileBytes) || !Constants.CheckFileNameExtension(Path.GetExtension(ImageFile.FileName))) return StatusCode(415, "File content is not a valid format!");
             }
 
-            return BadRequest(Constants.ImageNotFound);
+            var ImageSize = ImageFile.Length;
+            if (ImageSize > Constants.MaxImageSizeByte) return BadRequest("File exceeds Maximum size!");
+
+            await minIOService.UpdateUserImage(ImageFile, user);
+            return Ok(new OutputAppUserViewModel(user));
+        }
+
+        [HttpDelete]
+        [Authorize]
+        public async Task<IActionResult> RemoveImage()
+        {
+            AppUser user = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            if (user.ImageName == null) return Conflict("User already does not have image!");
+            await minIOService.RemoveUserImage(user);
+            return Ok(new OutputAppUserViewModel(user));
         }
 
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetProfile(string email)
         {
-            var user = await userManager.FindByEmailAsync(email);
+            var user = await _context.Users.Include(x => x.InEvents).SingleOrDefaultAsync(x => x.Email == email);
             if (user == null)
             {
                 return NotFound("User not found");

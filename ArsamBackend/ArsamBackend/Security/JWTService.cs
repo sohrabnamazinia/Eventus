@@ -49,6 +49,7 @@ namespace ArsamBackend.Security
             var TokenDescriptor = new SecurityTokenDescriptor()
             {
                 Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddYears(1),
                 SigningCredentials = Creds
             };
 
@@ -87,7 +88,7 @@ namespace ArsamBackend.Security
             if (userId == null)
                 return null;
             var userRole = await context.EventUserRole.FindAsync(userId, eventId);
-            return userRole.Role;
+            return userRole?.Role;
         }
 
         #region utilities

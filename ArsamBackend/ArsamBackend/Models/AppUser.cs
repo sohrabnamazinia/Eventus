@@ -18,6 +18,8 @@ namespace ArsamBackend.Models
         public string LastName { get; set; }
         public string Description { get; set; }
         public virtual UserImage Image { get; set; }
+        public string ImageName { get; set; }
+        public string ImageLink { get; set; }
         public virtual Category Fields { get; set; }
         public long Balance { get; set; }
 

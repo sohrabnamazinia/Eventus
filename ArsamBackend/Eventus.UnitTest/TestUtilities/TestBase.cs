@@ -34,6 +34,7 @@ namespace Eventus.UnitTest.TestUtilities
         public Mock<IJWTService> jwtService = new Mock<IJWTService>();
         public Mock<IEventService> eventService = new Mock<IEventService>();
         public AppDbContext context = new AppDbContext(new DbContextOptions<AppDbContext>());
+        public Mock<IMinIOService> MockMinio = new Mock<IMinIOService>();
         #endregion mock
     }
 }
