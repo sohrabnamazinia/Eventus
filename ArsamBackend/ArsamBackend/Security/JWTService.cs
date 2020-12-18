@@ -88,7 +88,7 @@ namespace ArsamBackend.Security
             if (userId == null)
                 return null;
             var userRole = await context.EventUserRole.FindAsync(userId, eventId);
-            return userRole.Role;
+            return userRole?.Role;
         }
 
         #region utilities
