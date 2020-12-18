@@ -13,6 +13,8 @@ using Nancy.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using ArsamBackend.Security;
+using Microsoft.Extensions.Configuration;
 
 namespace Eventus.UnitTest.TestUtilities
 {
@@ -23,6 +25,7 @@ namespace Eventus.UnitTest.TestUtilities
         public Mock<FakeSignInManager> mockSigninManager = new Mock<FakeSignInManager>();
         public Mock<ILogger<AccountController>> mockLogger = new Mock<ILogger<AccountController>>();
         public Mock<ILogger<EventController>> mockEventLogger = new Mock<ILogger<EventController>>();
+        public Mock<ILogger<EventService>> mockEventServiceLogger = new Mock<ILogger<EventService>>();
         public Mock<IDataProtector> mockDataProtector = new Mock<IDataProtector>();
         public Mock<IDataProtectionProvider> mockDPProvider = new Mock<IDataProtectionProvider>();
         public Mock<IJWTService> mockJWTHandler = new Mock<IJWTService>();
@@ -31,9 +34,10 @@ namespace Eventus.UnitTest.TestUtilities
         public Mock<HttpContext> mockContext = new Mock<HttpContext>();
         public Mock<IUrlHelper> mockUrl = new Mock<IUrlHelper>();
         public JavaScriptSerializer serializer = new JavaScriptSerializer();
-        public Mock<IJWTService> jwtService = new Mock<IJWTService>();
-        public Mock<IEventService> eventService = new Mock<IEventService>();
         public AppDbContext context = new AppDbContext(new DbContextOptions<AppDbContext>());
+        public AppDbContext eventsContext = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: "EventusDbTest").Options);
+        public IEventService eventService ;
         public Mock<IMinIOService> MockMinio = new Mock<IMinIOService>();
 
         #endregion mock
