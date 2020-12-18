@@ -21,7 +21,7 @@ namespace Eventus.UnitTest.TestUtilities
         #region mock
         public Mock<FakeUserManager> mockUserManager = new Mock<FakeUserManager>();
         public Mock<FakeSignInManager> mockSigninManager = new Mock<FakeSignInManager>();
-        public Mock<ILogger<AccountController>> mockAccountLogger = new Mock<ILogger<AccountController>>();
+        public Mock<ILogger<AccountController>> mockLogger = new Mock<ILogger<AccountController>>();
         public Mock<ILogger<EventController>> mockEventLogger = new Mock<ILogger<EventController>>();
         public Mock<IDataProtector> mockDataProtector = new Mock<IDataProtector>();
         public Mock<IDataProtectionProvider> mockDPProvider = new Mock<IDataProtectionProvider>();
@@ -35,6 +35,7 @@ namespace Eventus.UnitTest.TestUtilities
         public Mock<IEventService> eventService = new Mock<IEventService>();
         public AppDbContext context = new AppDbContext(new DbContextOptions<AppDbContext>());
         public Mock<IMinIOService> MockMinio = new Mock<IMinIOService>();
+
         #endregion mock
     }
 }

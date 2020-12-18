@@ -17,7 +17,7 @@ namespace Eventus.UnitTest.AccountTests
             {
                 HttpContext = mockContext.Object
             };
-            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockAccountLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object)
+            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object, MockMinio.Object)
             {
                 ControllerContext = controllerContext,
                 Url = mockUrl.Object
