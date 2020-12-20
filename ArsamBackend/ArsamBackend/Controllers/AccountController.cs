@@ -273,7 +273,7 @@ namespace ArsamBackend.Controllers
 
             if (user.ImageName != null)
             {
-                user.ImageLink = minIOService.GenerateUrl(user.Id, user.ImageLink).Result;
+                user.ImageLink = minIOService.GenerateUrl(user.Id, user.ImageName).Result;
                 _context.SaveChanges();
             }
             
