@@ -270,8 +270,13 @@ namespace ArsamBackend.Controllers
             {
                 return NotFound("User not found");
             }
-            user.ImageLink = minIOService.GenerateUrl(user.Id, user.ImageLink).Result;
-            _context.SaveChanges();
+
+            if (user.ImageName != null)
+            {
+                user.ImageLink = minIOService.GenerateUrl(user.Id, user.ImageLink).Result;
+                _context.SaveChanges();
+            }
+            
             return Ok(new OutputAppUserViewModel(user));
         }
 
