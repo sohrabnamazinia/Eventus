@@ -12,7 +12,7 @@ namespace ArsamBackend.ViewModels
 {
     public class OutputAppUserViewModel
     {
-
+        
         public OutputAppUserViewModel(AppUser user)
         {
             Email = user.Email;
@@ -26,7 +26,7 @@ namespace ArsamBackend.ViewModels
             Tickets = user.Tickets.Select(x => new TicketProfileViewModel(x)).ToList();
             Balance = user.Balance;
         }
-
+      
         public string Email { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }

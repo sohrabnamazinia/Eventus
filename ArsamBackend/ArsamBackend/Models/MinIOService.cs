@@ -63,6 +63,7 @@ namespace ArsamBackend.Models
 
         public async Task<string> GenerateUrl(string id, string fileName)
         {
+            if (id == null || fileName == null) return null;
             return await minio.PresignedGetObjectAsync(UsersBucketName, CreateObjectName(fileName, id), Constants.PresignedGetObjectExpirationPeriod);
         }
 
