@@ -70,6 +70,7 @@ namespace ArsamBackend.ViewModels
             MyRole = userRole?.ToString();
             TicketTypes = Event.TicketTypes?.Select(x => new TicketTypeEventViewModel(x)).ToList();
             BuyingTicketEnabled = Event.BuyingTicketEnabled;
+            AveragedRating = Event.AveragedRating;
         }
 
         public string Name { get; set; }
@@ -105,6 +106,7 @@ namespace ArsamBackend.ViewModels
         public string MyRole { get; set; }
 
         public bool BuyingTicketEnabled { get; set; }
+        public double AveragedRating { get; set; }
 
     }
 

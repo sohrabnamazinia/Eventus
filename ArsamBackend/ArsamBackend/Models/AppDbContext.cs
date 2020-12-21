@@ -16,6 +16,7 @@ namespace ArsamBackend.Models
         }
 
         public DbSet<Event> Events { get; set; }
+        public DbSet<Rating> Ratings { get; set; }
         public DbSet<Task> Tasks { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<TicketType> TicketTypes { get; set; }

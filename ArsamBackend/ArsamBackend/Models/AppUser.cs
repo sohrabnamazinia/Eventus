@@ -14,6 +14,7 @@ namespace ArsamBackend.Models
         public virtual ICollection<Event> InEvents { get; set; }
         public virtual ICollection<Ticket> Tickets { get; set; }
         public virtual ICollection<Task> AssignedTasks { get; set; }
+        public virtual ICollection<Rating> Ratings { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Description { get; set; }
