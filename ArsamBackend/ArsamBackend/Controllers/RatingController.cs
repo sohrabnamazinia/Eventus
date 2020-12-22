@@ -43,34 +43,49 @@ namespace ArsamBackend.Controllers
             this.jwtHandler = jwtHandler;
         }
 
-        [HttpPut]
+        [HttpPost]
         public async Task<ActionResult<AppUser>> RateEvent(RateEventViewModel model)
         {
             AppUser user = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var ev = _context.Events.Find(model.Id);
             if (ev == null) return NotFound("Event not found");
+            if ((int) model.Stars > 5 || (int) model.Stars < 1) return BadRequest("Stars count must be from 1 to 5");
             Rating rating = new Rating()
             {
                 Event = ev,
                 Stars = model.Stars,
                 User = user
             };
-            if (!CanRate(ev, user)) return BadRequest("user can not rate the event");
-            var temp = ev.Ratings.Where(x => x.User == user).First();
-            if (temp != null) ev.Ratings.Remove(temp);
+            var canRate = CanRate(ev, user);
+            switch (canRate)
+            {
+                case -3:
+                    return BadRequest("project events can not be rated!");
+                case -2:
+                    return BadRequest("event has not still finished!");
+                case -1:
+                    return BadRequest("only event members can rate the event!");
+            };
+
+            var temp = ev.Ratings.Where(x => x.User == user).FirstOrDefault();
+            if (temp != null)
+            {
+                ev.AveragedRating = (((ev.AveragedRating * ev.Ratings.Count) - (int) temp.Stars)) / (ev.Ratings.Count - 1); 
+                ev.Ratings.Remove(temp);
+            }
             _context.Ratings.Add(rating);
-            ev.AveragedRating = ((ev.AveragedRating * ev.Ratings.Count) + (double)rating.Stars) / (ev.Ratings.Count + 1);
+            ev.AveragedRating = (((ev.AveragedRating) * (ev.Ratings.Count - 1) + (double)rating.Stars)) / (ev.Ratings.Count);
             _context.SaveChanges();
             return Ok(new OutputEventViewModel(ev));
         }
 
         [NonAction]
-        public bool CanRate(Event ev, AppUser user)
+        public int CanRate(Event ev, AppUser user)
         {
-            if (ev.IsProject) return false;
-            if (DateTime.Now < ev.EndDate) return false;
-            if (!ev.EventMembers.Contains(user)) return false;
-            return true;
+            if (ev.IsProject) return -3;
+            if (DateTime.Now < ev.EndDate) return -2;
+            if (!ev.EventMembers.Contains(user)) return -1;
+            return 0;
         }
 
         [NonAction]
