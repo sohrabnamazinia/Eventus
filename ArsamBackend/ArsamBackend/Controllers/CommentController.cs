@@ -54,7 +54,9 @@ namespace ArsamBackend.Controllers
                 return StatusCode(404, "event not found");
 
             Comment parent = await _context.Comments.FindAsync(comment.ParentId);
-
+            if (parent == null || !ev.Comments.Contains(parent))
+                return BadRequest("parent is not valid");
+            
             var newComment = new Comment()
             {
                 User = requestedUser,
