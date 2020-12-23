@@ -70,7 +70,8 @@ namespace ArsamBackend.Controllers
             var temp = ev.Ratings.Where(x => x.User == user).FirstOrDefault();
             if (temp != null)
             {
-                ev.AveragedRating = (((ev.AveragedRating * ev.Ratings.Count) - (int) temp.Stars)) / (ev.Ratings.Count - 1); 
+                if (ev.Ratings.Count == 1) ev.AveragedRating = 0;
+                else ev.AveragedRating = (((ev.AveragedRating * ev.Ratings.Count) - (int) temp.Stars)) / (ev.Ratings.Count - 1); 
                 ev.Ratings.Remove(temp);
             }
             _context.Ratings.Add(rating);
