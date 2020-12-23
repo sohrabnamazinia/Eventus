@@ -70,6 +70,8 @@ namespace ArsamBackend.ViewModels
             MyRole = userRole?.ToString();
             TicketTypes = Event.TicketTypes?.Select(x => new TicketTypeEventViewModel(x)).ToList();
             BuyingTicketEnabled = Event.BuyingTicketEnabled;
+            AveragedRating = Math.Round(Event.AveragedRating, 1);
+            RatingCount = Event.Ratings == null ? 0 : Event.Ratings.Count;
         }
 
         public string Name { get; set; }
@@ -105,6 +107,8 @@ namespace ArsamBackend.ViewModels
         public string MyRole { get; set; }
 
         public bool BuyingTicketEnabled { get; set; }
+        public double AveragedRating { get; set; }
+        public long RatingCount { get; set; }
 
     }
 
@@ -134,6 +138,8 @@ namespace ArsamBackend.ViewModels
             EventTicketTypes = ev.TicketTypes.Select(x => x.Name).ToList();
             EventTickets = ev.Tickets.Select(x => x.User.UserName).ToList();
             BuyingTicketEnabled = ev.BuyingTicketEnabled;
+            AveragedRating = Math.Round(ev.AveragedRating, 1);
+            RatingCount = ev.Ratings == null ? 0 : ev.Ratings.Count;
         }
 
         public string Name { get; set; }
@@ -147,7 +153,9 @@ namespace ArsamBackend.ViewModels
         public List<string> EventMembers { get; set; }
         public List<string> EventTicketTypes { get; set; }
         public List<string> EventTickets { get; set; }
+        public double AveragedRating { get; set; }
         public bool BuyingTicketEnabled { get; set; }
+        public long RatingCount { get; set; }
 
     }
 }

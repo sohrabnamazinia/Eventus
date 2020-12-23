@@ -45,8 +45,10 @@ namespace ArsamBackend.Models
         public int MaximumNumberOfMembers { get; set; }
         
         public virtual ICollection<Ticket> Tickets { get; set; }
+        public double AveragedRating { get; set; }
 
         public virtual ICollection<TicketType> TicketTypes { get; set; }
+        public virtual ICollection<Rating> Ratings { get; set; }
 
         public virtual List<AppUser> EventMembers { get; set; }
 
