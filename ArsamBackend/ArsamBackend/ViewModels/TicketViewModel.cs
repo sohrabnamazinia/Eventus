@@ -35,11 +35,15 @@ namespace ArsamBackend.ViewModels
             TicketTypeName = t.Type.Name;
             Price = t.Type.Price;
             TicketId = t.Id;
+            EventEndDate = t.Event.EndDate;
+            EventId = t.EventId;
         }
         public int TicketId { get; set; }
         public string EventName { get; set; }
         public string TicketTypeName { get; set; }
         public long Price { get; set; }
+        public int EventId { get; set; }
+        public DateTime EventEndDate { get; set; }
 
     }
 }
