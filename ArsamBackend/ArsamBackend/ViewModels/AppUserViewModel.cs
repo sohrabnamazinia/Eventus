@@ -20,6 +20,7 @@ namespace ArsamBackend.ViewModels
             LastName = user.LastName;
             Description = user.Description;
             Fields = CategoryService.ConvertCategoriesToList(user.Fields);
+            // Also creator
             AdminInEvents = user.Roles.Where(x => x.Role == Role.Admin).Select(x => new OutputAbstractViewModel(x.Event)).ToList();
             InEvents = user.InEvents.ToList().Select(x => new OutputAbstractViewModel(x)).ToList();
             Image = user.ImageLink;
@@ -37,8 +38,6 @@ namespace ArsamBackend.ViewModels
         public ICollection<OutputAbstractViewModel> InEvents { get; set; }
         public ICollection<OutputAbstractViewModel> AdminInEvents { get; set; }
         public ICollection<TicketProfileViewModel> Tickets { get; set; }
-
-
 
     }
 
