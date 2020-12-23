@@ -17,6 +17,7 @@ namespace ArsamBackend.Models
 
         public DbSet<Event> Events { get; set; }
         public DbSet<Task> Tasks { get; set; }
+        public DbSet<Comment> Comments { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<TicketType> TicketTypes { get; set; }
         public DbSet<EventImage> EventImages { get; set; }
@@ -30,6 +31,8 @@ namespace ArsamBackend.Models
             modelBuilder.Entity<AppUser>().HasOne(x => x.Image).WithOne(x => x.User).HasForeignKey<UserImage>(x => x.UserId);
             modelBuilder.Entity<EventUserRole>().HasKey(o => new {o.AppUserId, o.EventId});
             modelBuilder.Entity<Ticket>().HasOne(x => x.Type).WithMany(x => x.Tickets).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Comment>().HasOne(x => x.Event).WithMany(x => x.Comments).OnDelete(DeleteBehavior.NoAction);
+            modelBuilder.Entity<Comment>(entity => { entity.HasOne(x => x.Parent).WithMany(x => x.Childs); });
 
             modelBuilder.Entity<Event>().HasQueryFilter(x => EF.Property<bool>(x, "IsDeleted") == false);
             modelBuilder.Entity<EventUserRole>().HasQueryFilter(x => EF.Property<bool>(x, "IsDeleted") == false);

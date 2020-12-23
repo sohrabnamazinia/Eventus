@@ -48,6 +48,8 @@ namespace ArsamBackend.Models
 
         public virtual ICollection<TicketType> TicketTypes { get; set; }
 
+        public virtual ICollection<Comment> Comments { get; set; }
+
         public virtual List<AppUser> EventMembers { get; set; }
 
         public virtual List<Task> Tasks { get; set; }
