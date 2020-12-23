@@ -73,7 +73,7 @@ namespace ArsamBackend.Security
         public async Task<AppUser> FindUserByTokenAsync(string authorization, AppDbContext context)
         {
             var userEmail = FindEmailByToken(authorization);
-            return await context.Users.SingleOrDefaultAsync(x => x.Email == userEmail);
+            return await context.Users.Include(x => x.InEvents).SingleOrDefaultAsync(x => x.Email == userEmail);
         }
         public async Task<Role?> FindRoleByTokenAsync(string authorization, int eventId, AppDbContext context)
         {

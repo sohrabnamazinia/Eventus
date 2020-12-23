@@ -54,9 +54,15 @@ namespace ArsamBackend.ViewModels
         public EventOutputAppUserViewModel(AppUser user)
         {
             Email = user.Email;
+            FirstName = user.FirstName;
+            LastName = user.LastName;
+            Image = user.ImageLink;
         }
 
         public string Email { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Image { get; set; }
     }
 
     public class TicketOutputAppUserViewModel

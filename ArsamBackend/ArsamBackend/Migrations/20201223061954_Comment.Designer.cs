@@ -4,14 +4,16 @@ using ArsamBackend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ArsamBackend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20201223061954_Comment")]
+    partial class Comment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -175,9 +177,6 @@ namespace ArsamBackend.Migrations
                         .HasColumnType("int")
                         .UseIdentityColumn();
 
-                    b.Property<double>("AveragedRating")
-                        .HasColumnType("float");
-
                     b.Property<bool>("BuyingTicketEnabled")
                         .HasColumnType("bit");
 
@@ -273,31 +272,6 @@ namespace ArsamBackend.Migrations
                     b.HasIndex("EventId");
 
                     b.ToTable("EventUserRole");
-                });
-
-            modelBuilder.Entity("ArsamBackend.Models.Rating", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .UseIdentityColumn();
-
-                    b.Property<int>("EventId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Stars")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EventId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Ratings");
                 });
 
             modelBuilder.Entity("ArsamBackend.Models.Task", b =>
@@ -638,23 +612,6 @@ namespace ArsamBackend.Migrations
                     b.Navigation("Event");
                 });
 
-            modelBuilder.Entity("ArsamBackend.Models.Rating", b =>
-                {
-                    b.HasOne("ArsamBackend.Models.Event", "Event")
-                        .WithMany("Ratings")
-                        .HasForeignKey("EventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ArsamBackend.Models.AppUser", "User")
-                        .WithMany("Ratings")
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("Event");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("ArsamBackend.Models.Task", b =>
                 {
                     b.HasOne("ArsamBackend.Models.Event", "Event")
@@ -767,8 +724,6 @@ namespace ArsamBackend.Migrations
 
                     b.Navigation("Image");
 
-                    b.Navigation("Ratings");
-
                     b.Navigation("Roles");
 
                     b.Navigation("Tickets");
@@ -784,8 +739,6 @@ namespace ArsamBackend.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Images");
-
-                    b.Navigation("Ratings");
 
                     b.Navigation("Tasks");
 
