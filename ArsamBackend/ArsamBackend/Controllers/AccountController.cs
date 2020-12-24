@@ -85,7 +85,7 @@ namespace ArsamBackend.Controllers
             }
             return BadRequest(ModelState);
         }
-        
+
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string id, string token)
         {
@@ -143,12 +143,12 @@ namespace ArsamBackend.Controllers
                 {
                     return Ok(new { Token });
                 }
-                
+
                 ModelState.AddModelError("Error", Constants.InvalidLoginError);
             }
             return BadRequest(ModelState);
         }
-        
+
         [HttpPost]
         public async Task<ActionResult> GoogleLogin(string TokenId)
         {
@@ -156,7 +156,7 @@ namespace ArsamBackend.Controllers
             try
             {
                 Payload = await GoogleJsonWebSignature.ValidateAsync(TokenId);
-                
+
                 var Email = Payload.Email;
                 var user = await userManager.FindByEmailAsync(Email);
 
@@ -276,7 +276,7 @@ namespace ArsamBackend.Controllers
                 user.ImageLink = minIOService.GenerateUrl(user.Id, user.ImageName).Result;
                 _context.SaveChanges();
             }
-            
+
             return Ok(new OutputAppUserViewModel(user));
         }
 
@@ -308,7 +308,35 @@ namespace ArsamBackend.Controllers
             return Ok(new OutputAppUserViewModel(user));
         }
 
+        [Authorize]
+        [HttpPatch]
+        public async Task<IActionResult> UpgradeToPremium(int package)
+        {
+            AppUser user = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            if (user == null)
+                return StatusCode(401, "token is invalid, user not found");
+
+            (int month, int price) = PremiumService.GetPackage(package);
+            if (month == -1 && price == -1)
+                return NotFound("package not found");
+
+            if (user.Balance < price)
+                return BadRequest("not enough credit, please charge your account");
+
+
+            user.Balance -= price;
+            
+            bool isPremium = !(user.ExpireDateOfPremium == null || user.ExpireDateOfPremium < DateTime.Now);
+
+            if (isPremium)
+                user.ExpireDateOfPremium = user.ExpireDateOfPremium.Value.AddMonths(month);
+            else
+                user.ExpireDateOfPremium = DateTime.Now.AddMonths(month);
+
+            await _context.SaveChangesAsync();
+            return Ok(new OutputAppUserViewModel(user));
+        }
 
     }
-    
+
 }
