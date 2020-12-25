@@ -23,6 +23,6 @@ namespace ArsamBackend.Models
         public string ImageLink { get; set; }
         public virtual Category Fields { get; set; }
         public long Balance { get; set; }
-
+        public DateTime? ExpireDateOfPremium { get; set; }
     }
 }

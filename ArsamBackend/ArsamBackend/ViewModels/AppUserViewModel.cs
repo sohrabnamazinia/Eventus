@@ -28,6 +28,7 @@ namespace ArsamBackend.ViewModels
             Balance = user.Balance;
             AveragedCreatedEventsRating = user.CreatedEvents.Count == 0 ? 0 : Math.Round((user.CreatedEvents.Select(x => x.AveragedRating).Sum()) / (user.CreatedEvents.Count), 1);
             CreatedEventsCount = user.CreatedEvents.Count;
+            Premium = !(user.ExpireDateOfPremium == null || user.ExpireDateOfPremium < DateTime.Now) ? (DateTime?) user.ExpireDateOfPremium : null;
         }
       
         public string Email { get; set; }
@@ -42,6 +43,7 @@ namespace ArsamBackend.ViewModels
         public ICollection<OutputAbstractViewModel> InEvents { get; set; }
         public ICollection<OutputAbstractViewModel> AdminInEvents { get; set; }
         public ICollection<TicketProfileViewModel> Tickets { get; set; }
+        public DateTime? Premium { get; set; }
 
     }
 
