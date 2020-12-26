@@ -95,6 +95,7 @@ namespace ArsamBackend
             services.AddScoped<IEventService, EventService>();
             services.AddScoped<ITaskService, TaskService>();
             services.AddScoped<IMinIOService, MinIOService>();
+            services.AddScoped<IEmailService, EmailService>();
             #endregion Services
             #region Db
             services.AddIdentity<AppUser, IdentityRole>(options => 

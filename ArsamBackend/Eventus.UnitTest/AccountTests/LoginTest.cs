@@ -25,7 +25,7 @@ namespace Eventus.UnitTest
             {
                 HttpContext = mockContext.Object
             };
-            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object, MockMinio.Object)
+            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object, MockMinio.Object, MockEmailService.Object, MockWebHostEnvironment.Object)
             {
                 ControllerContext = controllerContext,
                 Url = mockUrl.Object
@@ -64,7 +64,7 @@ namespace Eventus.UnitTest
             {
                 HttpContext = mockContext.Object
             };
-            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object, MockMinio.Object)
+            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object, MockMinio.Object, MockEmailService.Object, MockWebHostEnvironment.Object)
             {
                 ControllerContext = controllerContext,
                 Url = mockUrl.Object
@@ -101,7 +101,7 @@ namespace Eventus.UnitTest
             {
                 HttpContext = mockContext.Object
             };
-            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object, MockMinio.Object)
+            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object, MockMinio.Object, MockEmailService.Object, MockWebHostEnvironment.Object)
             {
                 ControllerContext = controllerContext,
                 Url = mockUrl.Object
@@ -136,7 +136,7 @@ namespace Eventus.UnitTest
             {
                 HttpContext = mockContext.Object
             };
-            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object, MockMinio.Object)
+            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object, MockMinio.Object, MockEmailService.Object, MockWebHostEnvironment.Object)
             {
                 ControllerContext = controllerContext,
                 Url = mockUrl.Object
@@ -172,7 +172,7 @@ namespace Eventus.UnitTest
             {
                 HttpContext = mockContext.Object
             };
-            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object, MockMinio.Object)
+            var controller = new AccountController(context, mockUserManager.Object, mockSigninManager.Object, mockLogger.Object, mockDPProvider.Object, mockDPPurposeStrings.Object, mockJWTHandler.Object, MockMinio.Object, MockEmailService.Object, MockWebHostEnvironment.Object)
             {
                 ControllerContext = controllerContext,
                 Url = mockUrl.Object

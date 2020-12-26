@@ -16,6 +16,7 @@ using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Identity;
@@ -41,8 +42,10 @@ namespace ArsamBackend.Controllers
         private readonly IDataProtector protector;
         private readonly IJWTService _jWTHandler;
         private readonly IMinIOService minIOService;
+        private readonly IEmailService emailService;
+        private readonly IWebHostEnvironment env;
 
-        public AccountController(AppDbContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler, IMinIOService minIO)
+        public AccountController(AppDbContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler, IMinIOService minIO, IEmailService emailService, IWebHostEnvironment env)
         {
             this._context = context;
             this.userManager = userManager;
@@ -51,6 +54,8 @@ namespace ArsamBackend.Controllers
             this.protector = dataProtectionProvider.CreateProtector(DataProtectionPurposeStrings.UserIdQueryString);
             this._jWTHandler = jWTHandler;
             this.minIOService = minIO;
+            this.emailService = emailService;
+            this.env = env;
         }
 
         [HttpPost]
@@ -73,8 +78,14 @@ namespace ArsamBackend.Controllers
                     var Token = await userManager.GenerateEmailConfirmationTokenAsync(user);
                     var EncryptedId = protector.Protect(user.Id);
                     var ConfirmationLink = Url.Action(nameof(ConfirmEmail), "Account", new { id = EncryptedId, token = Token }, Request.Scheme);
-                    // TODO : Send email 
-
+                    emailService.SendEmailConfirmation(new SendEmailConfirmationViewModel 
+                    {
+                        ConfirmationLink = ConfirmationLink,
+                        Email = user.Email,
+                        Username = user.UserName,
+                        Password = model.Password,
+                        FirstName = model.FirstName
+                    });
                     _logger.Log(LogLevel.Warning, ConfirmationLink);
                     return CreatedAtAction(nameof(Register), new { email = user.Email, token = Token, confirmationLink = ConfirmationLink });
                 }
@@ -87,29 +98,34 @@ namespace ArsamBackend.Controllers
         }
         
         [HttpGet]
-        public async Task<IActionResult> ConfirmEmail(string id, string token)
+        public async Task<ActionResult<string>> ConfirmEmail(string id, string token)
         {
             if (id == null)
             {
-                return NotFound(Constants.NotFoundError);
+                //return NotFound(Constants.NotFoundError);
+                return Constants.EmailFailedToConfirmedMessage;
             }
             if (token == null)
             {
-                return BadRequest("Email confirmation Token is invalid!");
+                //return BadRequest("Email confirmation Token is invalid!");
+                return Constants.EmailFailedToConfirmedMessage;
             }
             id = protector.Unprotect(id);
             var user = await userManager.FindByIdAsync(id);
             if (user == null)
             {
-                return NotFound(Constants.NotFoundError);
+                return Constants.EmailFailedToConfirmedMessage;
+                //return NotFound(Constants.NotFoundError);
             }
             var result = await userManager.ConfirmEmailAsync(user, token);
 
             if (result.Succeeded)
             {
-                return Ok(user.Email);
+                return Constants.EmailSuccessfullyConfirmedMessage;
+                //return Ok(user.Email);
             }
-            return BadRequest();
+            return Constants.EmailFailedToConfirmedMessage;
+            //return BadRequest();
         }
 
         [HttpPost]
