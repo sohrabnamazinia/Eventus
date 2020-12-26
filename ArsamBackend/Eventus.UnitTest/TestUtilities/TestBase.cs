@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Text;
 using ArsamBackend.Security;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Eventus.UnitTest.TestUtilities
 {
@@ -39,6 +40,8 @@ namespace Eventus.UnitTest.TestUtilities
             .UseInMemoryDatabase(databaseName: "EventusDbTest").Options);
         public IEventService eventService ;
         public Mock<IMinIOService> MockMinio = new Mock<IMinIOService>();
+        public Mock<IEmailService> MockEmailService = new Mock<IEmailService>();
+        public Mock<IWebHostEnvironment> MockWebHostEnvironment = new Mock<IWebHostEnvironment>();
 
         #endregion mock
     }
