@@ -46,6 +46,7 @@ namespace ArsamBackend.Controllers
             AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var ev = _context.Events.Find(model.EventId);
             if (ev == null) return NotFound("Event not found!");
+            if (ev.IsBlocked) return StatusCode(402, "upgrade To Premium");
             var requestedUserRole = await _jWTHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], ev.Id, _context);
             if (!(requestedUserRole == Role.Admin)) return StatusCode(403, "Access Denied");
             if (model.Capacity <= 0 || model.Price < 0) return BadRequest("Capacity must be positive!");
@@ -73,6 +74,7 @@ namespace ArsamBackend.Controllers
             var tt = _context.TicketTypes.Find(model.TypeId);
             if (tt == null) return NotFound("Ticket type not found!");
             var ev = tt.Event;
+            if (ev.IsBlocked) return StatusCode(402, "upgrade To Premium");
             var user = await userManager.FindByEmailAsync(model.UserEmail);
             if (requestedUser != user) return Conflict("users can not buy tickets for others!");
             if (ev == null) return NotFound("Event not found!");
@@ -97,6 +99,7 @@ namespace ArsamBackend.Controllers
         {
             AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var t = _context.Tickets.Find(tId);
+            if (t.Event.IsBlocked) return StatusCode(402, "upgrade To Premium");
             if (t == null) return NotFound("Ticket is not found!");
             if (t.User != requestedUser) return StatusCode(403, "deleting a ticket is just allowed for the owner of that!");
             _context.Tickets.Remove(t);
@@ -112,6 +115,7 @@ namespace ArsamBackend.Controllers
             var tt = _context.TicketTypes.Find(ttId);
             if (tt == null) return NotFound("Ticket type not found!");
             var ev = tt.Event;
+            if (ev.IsBlocked) return StatusCode(402, "upgrade To Premium");
             var requestedUserRole = await _jWTHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], ev.Id, _context);
             if (!(requestedUserRole == Role.Admin)) return StatusCode(403, "Access Denied");
             if (tt.Tickets.Count != 0) return BadRequest("There are tickets of this type, you must first remove them!");
@@ -125,8 +129,9 @@ namespace ArsamBackend.Controllers
         {
             AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var tt = _context.TicketTypes.Find(model.Id);
-            var ev = tt.Event;
             if (tt == null) return NotFound("Ticket type not found!");
+            var ev = tt.Event;
+            if (ev.IsBlocked) return StatusCode(402, "upgrade To Premium");
             var requestedUserRole = await _jWTHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], ev.Id, _context);
             if (!(requestedUserRole == Role.Admin)) return StatusCode(403, "Access Denied");
             if (model.Capacity != null && model.Capacity <= 0) return BadRequest("Capacity must be positive!");

@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using ActionFilters.ActionFilters;
 using ArsamBackend.Models;
 using ArsamBackend.Security;
 using ArsamBackend.Services;
@@ -40,11 +41,17 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpPost]
         public async Task<ActionResult> Create(InputEventViewModel incomeEvent)
         {
             AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            if (requestedUser == null)
+                return StatusCode(401, "token is invalid, user not found");
 
+            if (requestedUser.CreatedEvents.Count >= 5)
+                return StatusCode(402, "upgrade To Premium to create more events");
+            
             Event createdEvent = await _eventService.CreateEvent(incomeEvent, requestedUser);
 
             var result = new OutputEventViewModel(createdEvent);
@@ -52,6 +59,7 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpPost]
         public async Task<ActionResult> AddImage(int eventId)
         {
@@ -118,6 +126,7 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpPut]
         public async Task<ActionResult> UpdateImage(int eventId, int imageId)
         {
@@ -181,6 +190,7 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpDelete]
         public async Task<ActionResult> DeleteImage(int eventId, int imageId)
         {
@@ -216,7 +226,6 @@ namespace ArsamBackend.Controllers
             return Ok(result);
         }
 
-        [Authorize]
         [HttpGet]
         public async Task<ActionResult> Get(int id)
         {
@@ -242,6 +251,7 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpPut]
         public async Task<ActionResult> Update(int id, InputEventViewModel incomeEvent)
         {
@@ -271,6 +281,7 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
@@ -289,6 +300,7 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpPost]
         public async Task<ActionResult> JoinRequest(int eventId)
         {
@@ -334,7 +346,9 @@ namespace ArsamBackend.Controllers
             else
                 return BadRequest("you are in this event , login again please");
         }
+
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpGet]
         public async Task<ActionResult> GetJoinRequests(int eventId)
         {
@@ -355,6 +369,7 @@ namespace ArsamBackend.Controllers
 
 
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpPatch]
         public async Task<ActionResult> AcceptOrRejectJoinRequest(int eventId, string memberEmail, bool accept)
         {
@@ -398,6 +413,7 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpPatch]
         public async Task<ActionResult> PromoteMember(int id, string memberEmail)
         {
@@ -462,6 +478,7 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpDelete]
         public async Task<ActionResult> KickUser(int id, string userEmail)
         {
@@ -512,6 +529,7 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
+        [ServiceFilter(typeof(NotBlocked))]
         [HttpPatch]
         public async Task<ActionResult> PromoteAdmin(int id, string memberEmail)
         {
@@ -540,7 +558,6 @@ namespace ArsamBackend.Controllers
         }
 
 
-        [Authorize]
         [HttpPost]
         public async Task<ActionResult<ICollection<Event>>> Filter(FilterEventsViewModel model, [FromQuery] PaginationParameters pagination)
         {
