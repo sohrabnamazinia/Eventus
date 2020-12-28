@@ -296,11 +296,11 @@ namespace ArsamBackend.Controllers
 
             Event existEvent = await _context.Events.FindAsync(eventId);
             if (existEvent == null || existEvent.IsDeleted)
-                return StatusCode(404, "event not found");
+                return StatusCode(404, "Event Not Found");
 
             Role? userRole = await jwtHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], eventId, _context);
             if (userRole != null)
-                return BadRequest("you are in this event already");
+                return BadRequest("You are in this event already");
 
             
             var userRoleInDb = await _context.EventUserRole.IgnoreQueryFilters()
@@ -311,7 +311,7 @@ namespace ArsamBackend.Controllers
                 var memberRoleRequest = new EventUserRole() { AppUser = requestedUser, AppUserId = requestedUser.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member, Status = UserRoleStatus.Pending };
                 await _context.EventUserRole.AddAsync(memberRoleRequest);
                 await _context.SaveChangesAsync();
-                return Ok("your request has been sent");
+                return Ok("Your request has been sent");
             }
             else if (userRoleInDb.IsDeleted)
             {
@@ -319,7 +319,7 @@ namespace ArsamBackend.Controllers
                 var memberRoleRequest = new EventUserRole() { AppUser = requestedUser, AppUserId = requestedUser.Id, Event = existEvent, EventId = existEvent.Id, Role = Role.Member, Status = UserRoleStatus.Pending };
                 await _context.EventUserRole.AddAsync(memberRoleRequest);
                 await _context.SaveChangesAsync();
-                return Ok("your request has been sent");
+                return Ok("Your request has been sent");
             }
 
             if (userRoleInDb.Status == UserRoleStatus.Rejected)
@@ -327,12 +327,12 @@ namespace ArsamBackend.Controllers
                 userRoleInDb.Status = UserRoleStatus.Pending;
                 userRoleInDb.DateOfRequest = DateTime.Now;
                 await _context.SaveChangesAsync();
-                return Ok("your request has been sent again");
+                return Ok("Your request has been sent again");
             }
             else if (userRoleInDb.Status == UserRoleStatus.Pending)
-                return BadRequest("your join request has been sent before it's pending for accept");
-            else
-                return BadRequest("you are in this event , login again please");
+                return BadRequest("Your join request has been sent before it's pending for accept");
+            
+            return BadRequest("wtf!");
         }
         [Authorize]
         [HttpGet]

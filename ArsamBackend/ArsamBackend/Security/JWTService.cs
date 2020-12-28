@@ -87,7 +87,7 @@ namespace ArsamBackend.Security
             var userId = securityToken.Claims.First(claim => claim.Type == "UserId").Value;
             if (userId == null)
                 return null;
-            var userRole = await context.EventUserRole.FindAsync(userId, eventId);
+            var userRole = await context.EventUserRole.SingleOrDefaultAsync(x => x.Event.Id == eventId && x.AppUserId == userId && x.Status == UserRoleStatus.Accepted);
             return userRole?.Role;
         }
 
