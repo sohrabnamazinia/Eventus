@@ -76,10 +76,7 @@ namespace ArsamBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<ICollection<CommentOutputViewModel>>> Get(int eventId)
         {
-            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-            if (requestedUser == null)
-                return StatusCode(401, "token is invalid, user not found");
-
+           
             Event ev = await _context.Events.FindAsync(eventId);
             if (ev == null)
                 return StatusCode(404, "event not found");
