@@ -10,10 +10,14 @@ using ArsamBackend.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.Tasks;
+using ActionFilters.ActionFilters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ArsamBackend.Services;
 using ArsamBackend.Security;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using Task = System.Threading.Tasks.Task;
 
 namespace ArsamBackend
 {
@@ -96,6 +100,8 @@ namespace ArsamBackend
             services.AddScoped<ITaskService, TaskService>();
             services.AddScoped<IMinIOService, MinIOService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<NotBlocked>();
+
             #endregion Services
             #region Db
             services.AddIdentity<AppUser, IdentityRole>(options => 
@@ -113,10 +119,13 @@ namespace ArsamBackend
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             #region Ordered Middlewares
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseCheckUserIsPremium();
 
             app.UseRouting();
 
