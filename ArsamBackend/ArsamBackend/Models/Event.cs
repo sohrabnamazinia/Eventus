@@ -57,6 +57,10 @@ namespace ArsamBackend.Models
         public virtual List<Task> Tasks { get; set; }
 
         public virtual Category Categories { get; set; }
+
+        public bool IsBlocked { get; set; } = false;
+
+        public bool IsInActive { get; set; } = false;
     }
 
     public enum Role
