@@ -77,6 +77,9 @@ namespace ArsamBackend.Security
         }
         public async Task<Role?> FindRoleByTokenAsync(string authorization, int eventId, AppDbContext context)
         {
+            if (authorization.IsNullOrEmpty())
+                return null;
+            
             string token = string.Empty;
             if (AuthenticationHeaderValue.TryParse(authorization, out var headerValue))
             {

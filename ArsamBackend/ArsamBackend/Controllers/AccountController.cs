@@ -347,13 +347,17 @@ namespace ArsamBackend.Controllers
 
 
             user.Balance -= price;
-            
+
             bool isPremium = !(user.ExpireDateOfPremium == null || user.ExpireDateOfPremium < DateTime.Now);
 
             if (isPremium)
                 user.ExpireDateOfPremium = user.ExpireDateOfPremium.Value.AddMonths(month);
             else
+            {
                 user.ExpireDateOfPremium = DateTime.Now.AddMonths(month);
+                foreach (var ev in user.CreatedEvents)
+                    ev.IsBlocked = false;
+            }
 
             await _context.SaveChangesAsync();
             return Ok(new OutputAppUserViewModel(user));
