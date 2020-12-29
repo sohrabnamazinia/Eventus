@@ -56,6 +56,8 @@ namespace ArsamBackend.Controllers
             this.minIOService = minIO;
             this.emailService = emailService;
             this.env = env;
+            protector = dataProtectionProvider.CreateProtector(DataProtectionPurposeStrings.UserEmailQueryString);
+
         }
 
         [HttpPost]
@@ -281,6 +283,7 @@ namespace ArsamBackend.Controllers
         [Authorize]
         public async Task<IActionResult> GetProfile(string email)
         {
+            AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var user = await _context.Users.Include(x => x.InEvents).SingleOrDefaultAsync(x => x.Email == email);
             if (user == null)
             {
@@ -293,7 +296,10 @@ namespace ArsamBackend.Controllers
                 _context.SaveChanges();
             }
 
-            return Ok(new OutputAppUserViewModel(user));
+            var result = new OutputAppUserViewModel(user);
+            result.IsMe = requestedUser == user;
+            result.EncryptedEmail = protector.Protect(user.Email);
+            return Ok(result);
         }
 
         [HttpPost]

@@ -10,7 +10,5 @@ namespace ArsamBackend.ViewModels
     {
         [Required]
         public int TypeId { get; set; }
-        [Required]
-        public string UserEmail { get; set; }
     }
 }
