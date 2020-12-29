@@ -29,8 +29,9 @@ namespace ArsamBackend.Controllers
         public readonly JwtSecurityTokenHandler handler;
         private readonly IDataProtector protector;
         private readonly IJWTService _jWTHandler;
+        private readonly IEmailService emailService;
 
-        public TicketController(AppDbContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler)
+        public TicketController(AppDbContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler, IEmailService emailService)
         {
             this._context = context;
             this.userManager = userManager;
@@ -38,6 +39,7 @@ namespace ArsamBackend.Controllers
             this._logger = logger;
             this.protector = dataProtectionProvider.CreateProtector(DataProtectionPurposeStrings.UserIdQueryString);
             this._jWTHandler = jWTHandler;
+            this.emailService = emailService;
         }
 
         [HttpPost]
@@ -88,9 +90,18 @@ namespace ArsamBackend.Controllers
             if (tt.Count == tt.Capacity) return BadRequest("All tickets of this type are sold!");
             t.Type = tt;
             tt.Count++;
-
             _context.Tickets.Add(t);
             _context.SaveChanges();
+            emailService.SendTicketNotification(new SendTicketNotificationViewModel 
+            {
+                Email = user.Email,
+                EventName = t.Event.Name,
+                Username = user.UserName,
+                TicketTypeName = t.Type.Name,
+                price = t.Type.Price,
+                balance = user.Balance,
+                FirstName = user.FirstName
+            });
             return Ok(new TicketOutputViewModel(t));
         }
 

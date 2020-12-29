@@ -99,6 +99,7 @@ namespace ArsamBackend
             services.AddScoped<IEventService, EventService>();
             services.AddScoped<ITaskService, TaskService>();
             services.AddScoped<IMinIOService, MinIOService>();
+            services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<NotBlocked>();
 
             #endregion Services

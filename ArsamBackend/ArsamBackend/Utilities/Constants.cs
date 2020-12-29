@@ -1,6 +1,7 @@
 ﻿using Minio;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -32,6 +33,18 @@ namespace ArsamBackend.Utilities
         public static readonly string jpg;
         public static readonly string jfif;
         public static readonly string tif;
+        public static readonly string ConfirmAccountRegisterationViewPath = Path.DirectorySeparatorChar.ToString() + "Templates" + Path.DirectorySeparatorChar.ToString() + "EmailTemplate" + Path.DirectorySeparatorChar.ToString() + "EmailConfirmation.html";
+        public static readonly string BuyTicketResult = Path.DirectorySeparatorChar.ToString() + "Templates" + Path.DirectorySeparatorChar.ToString() + "EmailTemplate" + Path.DirectorySeparatorChar.ToString() + "BuyTicketResult.html";
+        public static readonly string SMTPGoogleDomain = "smtp.gmail.com";
+        public static readonly int SMTPPort = 587;
+        public static readonly string ProjectEmail = "eventus.arsam@gmail.com";
+        public static readonly string ProjectSender = "Eventus Team";
+        public static readonly string ProjectReciever = "User";
+        public static readonly string EmailConfirmationSubject = "Confirm your Email";
+        public static readonly string TicketBoughtResult = "You bought the ticket successfully!";
+        public static readonly string EmailConfirmationCallBackUrl = "https://localhost:44373/api/account/confirmemail";
+        public static readonly string EmailSuccessfullyConfirmedMessage = "Email is Successfully Confirmed!";
+        public static readonly string EmailFailedToConfirmedMessage = "Email is not Confirmed!\nplease try again later!\ncontact eventus.arsam@gmail.com for more support";
 
         public static bool FileFormatChecker(byte[] fileBytes)
         {
