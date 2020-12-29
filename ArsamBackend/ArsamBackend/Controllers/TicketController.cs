@@ -77,8 +77,8 @@ namespace ArsamBackend.Controllers
             if (tt == null) return NotFound("Ticket type not found!");
             var ev = tt.Event;
             if (ev.IsBlocked) return StatusCode(402, "Upgrade To Premium");
-            var user = await userManager.FindByEmailAsync(model.UserEmail);
-            if (requestedUser != user) return Conflict("users can not buy tickets for others!");
+            //var user = await userManager.FindByEmailAsync(model.UserEmail);
+            //if (requestedUser != user) return Conflict("users can not buy tickets for others!");
             if (ev == null) return NotFound("Event not found!");
             if (user == null) return NotFound("User not found!");
             if (!ev.BuyingTicketEnabled) return StatusCode(403, "Currently, this event does not sell tickets!");
