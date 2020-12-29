@@ -73,7 +73,6 @@ namespace ArsamBackend.Controllers
             return await Get(comment.EventId);
         }
 
-        [Authorize]
         [HttpGet]
         public async Task<ActionResult<ICollection<CommentOutputViewModel>>> Get(int eventId)
         {
