@@ -8,5 +8,6 @@ namespace ArsamBackend.Utilities
     public class DataProtectionPurposeStrings
     {
         public static readonly string UserIdQueryString = "UserIdQueryString";
+        public static readonly string UserEmailQueryString = "UserEmailQueryString";
     }
 }

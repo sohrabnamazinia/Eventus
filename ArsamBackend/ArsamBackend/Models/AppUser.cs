@@ -20,6 +20,8 @@ namespace ArsamBackend.Models
         public string FirstName { get; set; }
         [Required]
         public string LastName { get; set; }
+        [NotMapped]
+        public string EncryptedEmail { get; set; }
         public string Description { get; set; }
         public virtual UserImage Image { get; set; }
         public string ImageName { get; set; }
