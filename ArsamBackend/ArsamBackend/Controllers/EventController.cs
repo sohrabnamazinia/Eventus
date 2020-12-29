@@ -41,7 +41,6 @@ namespace ArsamBackend.Controllers
         }
 
         [Authorize]
-        [ServiceFilter(typeof(NotBlocked))]
         [HttpPost]
         public async Task<ActionResult> Create(InputEventViewModel incomeEvent)
         {
@@ -49,7 +48,7 @@ namespace ArsamBackend.Controllers
             if (requestedUser == null)
                 return StatusCode(401, "token is invalid, user not found");
 
-            if (requestedUser.CreatedEvents.Count >= 5)
+            if (requestedUser.ExpireDateOfPremium == null && requestedUser.CreatedEvents.Count >= 5)
                 return StatusCode(402, "upgrade To Premium to create more events");
             
             Event createdEvent = await _eventService.CreateEvent(incomeEvent, requestedUser);

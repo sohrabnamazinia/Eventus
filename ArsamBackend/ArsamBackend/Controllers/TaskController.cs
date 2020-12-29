@@ -47,6 +47,8 @@ namespace ArsamBackend.Controllers
 
             Event taskEvent = await _context.Events.FindAsync(incomeTask.EventId);
 
+            if (taskEvent.IsBlocked) return StatusCode(402, "Upgrade To Premium");
+
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
 
@@ -69,6 +71,8 @@ namespace ArsamBackend.Controllers
             Role? userRole = await jwtHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], incomeTask.EventId, _context);
 
             Event taskEvent = existTask.Event;
+
+            if (taskEvent.IsBlocked) return StatusCode(402, "Upgrade To Premium");
 
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
@@ -99,6 +103,8 @@ namespace ArsamBackend.Controllers
 
             Event taskEvent = existTask.Event;
 
+            if (taskEvent.IsBlocked) return StatusCode(402, "Upgrade To Premium");
+
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
 
@@ -126,6 +132,8 @@ namespace ArsamBackend.Controllers
                 return StatusCode(404, "task not found");
 
             Event taskEvent = existTask.Event;
+
+            if (taskEvent.IsBlocked) return StatusCode(402, "Upgrade To Premium");
 
             if (taskEvent == null)
                 return StatusCode(404, "event not found");
@@ -167,6 +175,8 @@ namespace ArsamBackend.Controllers
                 return StatusCode(404, "task not found");
 
             Event taskEvent = existTask.Event;
+
+            if (taskEvent.IsBlocked) return StatusCode(402, "Upgrade To Premium");
 
             if (taskEvent == null)
                 return StatusCode(404, "event not found");

@@ -72,6 +72,7 @@ namespace ArsamBackend.ViewModels
             BuyingTicketEnabled = Event.BuyingTicketEnabled;
             AveragedRating = Math.Round(Event.AveragedRating, 1);
             RatingCount = Event.Ratings == null ? 0 : Event.Ratings.Count;
+            IsBlocked = Event.IsBlocked;
         }
 
         public string Name { get; set; }
@@ -109,6 +110,7 @@ namespace ArsamBackend.ViewModels
         public bool BuyingTicketEnabled { get; set; }
         public double AveragedRating { get; set; }
         public long RatingCount { get; set; }
+        public bool IsBlocked { get; set; }
 
     }
 
@@ -140,6 +142,7 @@ namespace ArsamBackend.ViewModels
             BuyingTicketEnabled = ev.BuyingTicketEnabled;
             AveragedRating = Math.Round(ev.AveragedRating, 1);
             RatingCount = ev.Ratings == null ? 0 : ev.Ratings.Count;
+            IsBlocked = ev.IsBlocked;
         }
 
         public string Name { get; set; }
@@ -156,6 +159,7 @@ namespace ArsamBackend.ViewModels
         public double AveragedRating { get; set; }
         public bool BuyingTicketEnabled { get; set; }
         public long RatingCount { get; set; }
+        public bool IsBlocked { get; set; }
 
     }
 }

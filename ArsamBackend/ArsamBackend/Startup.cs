@@ -118,12 +118,13 @@ namespace ArsamBackend
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             #region Ordered Middlewares
-            app.Run(MyMiddleware);
 
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseCheckUserIsPremium();
 
             app.UseRouting();
 
@@ -143,11 +144,6 @@ namespace ArsamBackend
                 endpoints.MapControllerRoute(Constants.RouteName, Constants.RoutePattern);
             });
             #endregion Ordered Middleware
-        }
-        private async Task MyMiddleware(HttpContext context)
-        {
-            AppDbContext db = new AppDbContext();
-            await context.Response.WriteAsync("Hello World! ");
         }
     }
 }
