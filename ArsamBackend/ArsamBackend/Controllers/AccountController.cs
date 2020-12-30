@@ -159,7 +159,7 @@ namespace ArsamBackend.Controllers
 
                 if (result.Succeeded)
                 {
-                    return Ok(new { Token });
+                    return Ok(new { Token , user.Id});
                 }
 
                 ModelState.AddModelError("Error", Constants.InvalidLoginError);
