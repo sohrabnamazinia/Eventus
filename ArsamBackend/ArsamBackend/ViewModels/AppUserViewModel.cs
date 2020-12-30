@@ -65,12 +65,14 @@ namespace ArsamBackend.ViewModels
             FirstName = user.FirstName;
             LastName = user.LastName;
             Image = user.ImageLink;
+            UserId = user.Id;
         }
 
         public string Email { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Image { get; set; }
+        public string UserId { get; set; }
     }
 
     public class TicketOutputAppUserViewModel

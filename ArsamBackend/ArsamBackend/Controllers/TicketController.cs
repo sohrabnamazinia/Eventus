@@ -76,6 +76,7 @@ namespace ArsamBackend.Controllers
             var tt = _context.TicketTypes.Find(model.TypeId);
             if (tt == null) return NotFound("Ticket type not found!");
             var ev = tt.Event;
+            if (ev.IsProject) return BadRequest("Event projects do not have ticket");
             if (ev.IsBlocked) return StatusCode(402, "Upgrade To Premium");
             if (ev.Tickets.Count >= 50) return StatusCode(402, "Upgrade To Premium");
             //var user = await userManager.FindByEmailAsync(model.UserEmail);
