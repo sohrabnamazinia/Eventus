@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -44,8 +45,17 @@ namespace ArsamBackend.ViewModels
         public ICollection<OutputAbstractViewModel> AdminInEvents { get; set; }
         public ICollection<TicketProfileViewModel> Tickets { get; set; }
         public DateTime? Premium { get; set; }
-        public bool IsMe { get; set; }
         public string EncryptedEmail { get; set; }
+
+    }
+
+    public class GetProfileViewModel : OutputAppUserViewModel
+    {
+        public GetProfileViewModel(AppUser user) : base(user)
+        {
+
+        }
+        public bool IsMe { get; set; }
 
     }
 
@@ -65,12 +75,14 @@ namespace ArsamBackend.ViewModels
             FirstName = user.FirstName;
             LastName = user.LastName;
             Image = user.ImageLink;
+            UserId = user.Id;
         }
 
         public string Email { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Image { get; set; }
+        public string UserId { get; set; }
     }
 
     public class TicketOutputAppUserViewModel
