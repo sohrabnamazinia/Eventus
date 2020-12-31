@@ -27,7 +27,7 @@ namespace ArsamBackend.Controllers
         private readonly IDataProtectionProvider dataProtectionProvider;
         private readonly DataProtectionPurposeStrings dataProtectionPurposeStrings;
         private readonly IJWTService jWTHandler;
-        private readonly IMinIOService minIO;
+        private readonly IMinIOService minIOService;
         private readonly IJWTService jwtHandler;
 
         public RatingController(AppDbContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler, IMinIOService minIO, IJWTService jwtHandler)
@@ -39,7 +39,7 @@ namespace ArsamBackend.Controllers
             this.dataProtectionProvider = dataProtectionProvider;
             this.dataProtectionPurposeStrings = dataProtectionPurposeStrings;
             this.jWTHandler = jWTHandler;
-            this.minIO = minIO;
+            this.minIOService = minIO;
             this.jwtHandler = jwtHandler;
         }
 
@@ -77,6 +77,14 @@ namespace ArsamBackend.Controllers
             _context.Ratings.Add(rating);
             ev.AveragedRating = (((ev.AveragedRating) * (ev.Ratings.Count - 1) + (double)rating.Stars)) / (ev.Ratings.Count);
             _context.SaveChanges();
+
+            if (ev.Images.Count > 0)
+            {
+                foreach (var img in ev.Images)
+                    img.ImageLink = minIOService.GenerateEventsUrl(img.FileName).Result;
+                await _context.SaveChangesAsync();
+            }
+
             return Ok(new OutputEventViewModel(ev));
         }
 

@@ -12,8 +12,7 @@ namespace ArsamBackend.ViewModels
     {
         public OutputEventImageViewModel(EventImage image)
         {
-            Image = Convert.ToBase64String(
-                File.ReadAllBytes(Path.GetFullPath(Constants.EventImagesPath) + image.FileName));
+            Image = image.ImageLink;
             ImageId = image.Id;
         }
 

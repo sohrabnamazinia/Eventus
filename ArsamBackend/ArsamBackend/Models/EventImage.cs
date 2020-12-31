@@ -16,10 +16,10 @@ namespace ArsamBackend.Models
         [ForeignKey("Event")] 
         public int EventId { get; set; }
         public virtual Event Event { get; set; }
-
         public string FileName { get; set; }
-
         public string ContentType { get; set; }
+        public string ImageLink { get; set; }
+        public long Size { get; set; }
     }
 }
 
