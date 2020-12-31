@@ -49,14 +49,9 @@ namespace ArsamBackend.Security
 
             }
 
-            try
-            {
-                await _next(httpContext);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Something went wrong: {ex.Message}");
-            }
+           
+            await _next(httpContext);
+            
         }
     }
     public static class GlobalCustomMiddleware

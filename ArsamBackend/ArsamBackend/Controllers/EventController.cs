@@ -29,15 +29,17 @@ namespace ArsamBackend.Controllers
     {
         private readonly ILogger<EventController> _logger;
         private readonly IEventService _eventService;
+        private readonly IMinIOService minIOService;
         private readonly IJWTService jwtHandler;
         private readonly AppDbContext _context;
 
-        public EventController(IJWTService jwtHandler, AppDbContext context, ILogger<EventController> logger, IEventService eventService)
+        public EventController(IJWTService jwtHandler, AppDbContext context, ILogger<EventController> logger, IEventService eventService, IMinIOService minIO)
         {
             _logger = logger;
             this._eventService = eventService;
             this.jwtHandler = jwtHandler;
             this._context = context;
+            this.minIOService = minIO;
         }
 
         [Authorize]
@@ -74,10 +76,6 @@ namespace ArsamBackend.Controllers
             var files = Request.Form.Files;
             if (files.Count + existEvent.Images.Count > 5) return BadRequest("can not add more than 5 image to each event");
 
-            string path = Constants.EventImagesPath;
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
-
             foreach (var file in files)
             {
                 if (file != null && file.Length > 0)
@@ -91,9 +89,6 @@ namespace ArsamBackend.Controllers
                             return StatusCode(415, "one of file contents is not a valid format!");
                     }
 
-                    if (existEvent.Images.Count >= 5)
-                        return BadRequest("can not add more than 5 image to each event");
-
                     if (file.Length > 5 * Math.Pow(10, 6))
                         return BadRequest("image size limit is 5 mg");
                 }
@@ -102,20 +97,13 @@ namespace ArsamBackend.Controllers
             }
             foreach (var file in files)
             {
-                var fileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(file.FileName);
-                await using (var fileStream = new FileStream(Path.Combine(path, fileName), FileMode.Create))
-                {
-                    await file.CopyToAsync(fileStream);
-                }
+                await minIOService.AddImageToEvent(file, existEvent);
+            }
 
-                var image = new EventImage()
-                {
-                    EventId = eventId,
-                    Event = existEvent,
-                    FileName = fileName,
-                    ContentType = file.ContentType
-                };
-                existEvent.Images.Add(image);
+            if (existEvent.Images.Count > 0)
+            {
+                foreach (var img in existEvent.Images)
+                    img.ImageLink = minIOService.GenerateEventsUrl(img.FileName).Result;
                 await _context.SaveChangesAsync();
             }
 
@@ -142,11 +130,6 @@ namespace ArsamBackend.Controllers
 
             var newFile = files[0];
 
-            string path = Constants.EventImagesPath;
-            if (!Directory.Exists(path))
-                return NotFound("can not find image directory");
-
-
             if (newFile != null && newFile.Length > 0)
             {
                 using (var ms = new MemoryStream())
@@ -162,28 +145,18 @@ namespace ArsamBackend.Controllers
                 EventImage oldImage = existEvent.Images.SingleOrDefault(x => x.Id == imageId);
                 if (oldImage == null) return NotFound("no image found by this imageId");
 
-                string oldImagePath = path + oldImage.FileName;
-
-                string newFileName = Guid.NewGuid().ToString().Replace("-", "") + Path.GetExtension(newFile.FileName);
-
-                if (System.IO.File.Exists(oldImagePath))
-                {
-                    await using (var fileStream = new FileStream(Path.Combine(path, newFileName), FileMode.Create))
-                        await newFile.CopyToAsync(fileStream);
-
-                    System.IO.File.Delete(oldImagePath);
-                }
-                else
-                    return NotFound("can not find image");
-
-                oldImage.FileName = newFileName;
-                oldImage.ContentType = newFile.ContentType;
-
-                await _context.SaveChangesAsync();
+                await minIOService.UpdateEventImage(newFile, oldImage);
             }
             else
                 return BadRequest("image not found");
 
+
+            if (existEvent.Images.Count > 0)
+            {
+                foreach (var img in existEvent.Images)
+                    img.ImageLink = minIOService.GenerateEventsUrl(img.FileName).Result;
+                await _context.SaveChangesAsync();
+            }
             var result = new OutputEventViewModel(existEvent);
             return Ok(result);
         }
@@ -193,7 +166,6 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> DeleteImage(int eventId, int imageId)
         {
-
             Event existEvent = await _context.Events.FindAsync(eventId);
             if (existEvent == null || existEvent.IsDeleted)
                 return NotFound("no event found by this id: " + eventId);
@@ -202,24 +174,17 @@ namespace ArsamBackend.Controllers
             if (userRole != Role.Admin)
                 return StatusCode(403, "access denied");
 
-
-            string path = Constants.EventImagesPath;
-            if (!Directory.Exists(path))
-                return NotFound("can not find image directory");
-
-
             EventImage oldImage = existEvent.Images.SingleOrDefault(x => x.Id == imageId);
             if (oldImage == null) return NotFound("no image found by this imageId");
 
-            string oldImagePath = path + oldImage.FileName;
+            await minIOService.DeleteEventImage(oldImage);
 
-            if (System.IO.File.Exists(oldImagePath))
-                System.IO.File.Delete(oldImagePath);
-            else
-                return NotFound("can not find image");
-
-            _context.EventImages.Remove(oldImage);
-            await _context.SaveChangesAsync();
+            if (existEvent.Images.Count > 0)
+            {
+                foreach (var img in existEvent.Images)
+                    img.ImageLink = minIOService.GenerateEventsUrl(img.FileName).Result;
+                await _context.SaveChangesAsync();
+            }
 
             var result = new OutputEventViewModel(existEvent);
             return Ok(result);
@@ -236,6 +201,13 @@ namespace ArsamBackend.Controllers
 
             if (resultEvent.IsPrivate && userRole == null)
                 return StatusCode(403, "access denied, this event is private");
+
+            if (resultEvent.Images.Count > 0)
+            {
+                foreach (var img in resultEvent.Images)
+                    img.ImageLink = minIOService.GenerateEventsUrl(img.FileName).Result;
+                await _context.SaveChangesAsync();
+            }
 
             if (userRole == Role.Admin)
             {
@@ -273,6 +245,11 @@ namespace ArsamBackend.Controllers
             existEvent.Categories = CategoryService.BitWiseOr(incomeEvent.Categories);
             existEvent.BuyingTicketEnabled = incomeEvent.BuyingTicketEnabled;
 
+            if (existEvent.Images.Count > 0)
+            {
+                foreach (var img in existEvent.Images)
+                    img.ImageLink = minIOService.GenerateEventsUrl(img.FileName).Result;
+            }
             await _context.SaveChangesAsync();
 
             var result = new OutputEventViewModel(existEvent);
@@ -563,6 +540,17 @@ namespace ArsamBackend.Controllers
 
             if ((model.DateMax != null && model.DateMin != null) && DateTime.Compare((DateTime)model.DateMin, (DateTime)model.DateMax) >= 0) return BadRequest("Date interval is negative");
             var FilteredEvents = await _eventService.FilterEvents(model, pagination);
+            
+            foreach (var ev in FilteredEvents)
+            {
+                if (ev.Images.Count > 0)
+                {
+                    foreach (var img in ev.Images)
+                        img.ImageLink = minIOService.GenerateEventsUrl(img.FileName).Result;
+                    await _context.SaveChangesAsync();
+                }
+            }
+
             List<OutputEventViewModel> outModels = new List<OutputEventViewModel>();
             foreach (var ev in FilteredEvents) outModels.Add(new OutputEventViewModel(ev));
             return Ok(outModels);

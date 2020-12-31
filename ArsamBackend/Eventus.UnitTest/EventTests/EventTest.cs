@@ -32,7 +32,7 @@ namespace Eventus.EventTest
 
             var controllerContext = new ControllerContext() { HttpContext = mockContext.Object };
 
-            var controller = new EventController(mockJWTHandler.Object, eventsContext, mockEventLogger.Object, eventService) { ControllerContext = controllerContext, Url = mockUrl.Object };
+            var controller = new EventController(mockJWTHandler.Object, eventsContext, mockEventLogger.Object, eventService, MockMinio.Object) { ControllerContext = controllerContext, Url = mockUrl.Object };
 
             var model = new InputEventViewModel()
             {
