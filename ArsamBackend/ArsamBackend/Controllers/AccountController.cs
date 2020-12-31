@@ -234,10 +234,11 @@ namespace ArsamBackend.Controllers
         public async Task<IActionResult> UpdateProfile(UpdateProfileViewModel model)
         {
             AppUser user = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-            user.FirstName = model.FirstName.Trim().Equals(string.Empty) ? null : model.FirstName;
-            user.LastName = model.LastName.Trim().Equals(string.Empty) ? null : model.LastName;
-            user.Fields = model.Fields == null ? 0 : CategoryService.BitWiseOr(model.Fields);
-            user.Description = model.Description.Trim().Equals(string.Empty) ? null : model.Description;
+
+            user.FirstName = model.FirstName != null ? model.FirstName.Trim().Equals(string.Empty) ? user.FirstName : model.FirstName : user.FirstName;
+            user.LastName = model.LastName != null ? model.LastName.Trim().Equals(string.Empty) ? user.LastName : model.LastName : user.LastName;
+            user.Fields = model.Fields != null ? CategoryService.BitWiseOr(model.Fields) : user.Fields;
+            user.Description = model.Description != null ? model.Description.Trim().Equals(string.Empty) ? null : model.Description : user.Description;
             _context.Entry(user).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
             _context.SaveChanges();
             return Ok(new OutputAppUserViewModel(user));
