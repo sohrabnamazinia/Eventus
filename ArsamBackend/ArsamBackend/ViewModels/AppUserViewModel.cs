@@ -45,7 +45,7 @@ namespace ArsamBackend.ViewModels
         public ICollection<OutputAbstractViewModel> AdminInEvents { get; set; }
         public ICollection<TicketProfileViewModel> Tickets { get; set; }
         public DateTime? Premium { get; set; }
-        public string EncryptedEmail { get; set; }
+        //public string EncryptedEmail { get; set; }
 
     }
 
@@ -91,9 +91,11 @@ namespace ArsamBackend.ViewModels
         {
             Email = user.Email;
             Tickets = user.Tickets.Select(x => x.Id).ToList();
+            UserId = user.Id;
         }
 
         public string Email { get; set; }
         public List<int> Tickets { get; set; }
+        public string UserId { get; set; }
     }
 }

@@ -282,10 +282,10 @@ namespace ArsamBackend.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetProfile(string email)
+        public async Task<IActionResult> GetProfile(string id)
         {
             AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
-            var user = await _context.Users.Include(x => x.InEvents).SingleOrDefaultAsync(x => x.Email == email);
+            var user = await _context.Users.Include(x => x.InEvents).SingleOrDefaultAsync(x => x.Id == id);
             if (user == null)
             {
                 return NotFound("User not found");
@@ -299,7 +299,7 @@ namespace ArsamBackend.Controllers
 
             var result = new GetProfileViewModel(user);
             result.IsMe = requestedUser == user;
-            result.EncryptedEmail = protector.Protect(user.Email);
+            //result.EncryptedEmail = protector.Protect(user.Email);
             return Ok(result);
         }
 
