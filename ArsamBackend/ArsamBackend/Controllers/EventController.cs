@@ -235,7 +235,6 @@ namespace ArsamBackend.Controllers
                 return StatusCode(403, "access denied, you are not an admin");
 
             existEvent.Name = incomeEvent.Name;
-            existEvent.IsProject = incomeEvent.IsProject;
             existEvent.Description = incomeEvent.Description;
             existEvent.IsPrivate = incomeEvent.IsPrivate;
             existEvent.StartDate = incomeEvent.StartDate;
