@@ -68,7 +68,7 @@ namespace ArsamBackend.Controllers
 
             return Ok(new TicketTypeOutputViewModel(type));
         }
-
+        
         [HttpPost]
         public async Task<ActionResult<Ticket>> CreateTicket(CreateTicketViewModel model)
         {

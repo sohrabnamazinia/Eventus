@@ -235,7 +235,6 @@ namespace ArsamBackend.Controllers
                 return StatusCode(403, "access denied, you are not an admin");
 
             existEvent.Name = incomeEvent.Name;
-            existEvent.IsProject = incomeEvent.IsProject;
             existEvent.Description = incomeEvent.Description;
             existEvent.IsPrivate = incomeEvent.IsPrivate;
             existEvent.StartDate = incomeEvent.StartDate;
@@ -555,6 +554,22 @@ namespace ArsamBackend.Controllers
             foreach (var ev in FilteredEvents) outModels.Add(new OutputEventViewModel(ev));
             return Ok(outModels);
         }
+
+        [HttpPost]
+        public async Task<ActionResult<OutputEventViewModel>> Convert(int id)
+        {
+            AppUser user = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
+            var ev = _context.Events.Find(id);
+            if (ev == null) return NotFound("Event not found");
+            if (!ev.IsProject) return BadRequest("Event type is not project");
+            if (ev.Creator != user) return StatusCode(403, "only event creator can change the event type");
+            ev.Tasks.Clear();
+            ev.IsProject = false;
+            ev.BuyingTicketEnabled = true;
+            _context.SaveChanges();
+            return (new OutputEventViewModel(ev));
+        }
+
 
     }
 }
