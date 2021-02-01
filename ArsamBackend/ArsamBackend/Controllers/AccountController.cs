@@ -297,8 +297,8 @@ namespace ArsamBackend.Controllers
                 _context.SaveChanges();
             }
             _logger.Log(LogLevel.Warning, user.Roles.Count.ToString());
-            var AdminInEvents = user.Roles.Where(x => x.Role == Role.Admin).Select(x => new OutputAbstractViewModel(x.Event)).ToList();
-            _logger.Log(LogLevel.Warning, AdminInEvents.ToString());
+            var AdminInEvents = user.Roles.Where(x => x.Role == Role.Admin).ToList();
+            _logger.Log(LogLevel.Critical, AdminInEvents[0].EventId.ToString());
 
             var result = new GetProfileViewModel(user);
             result.IsMe = requestedUser == user;
