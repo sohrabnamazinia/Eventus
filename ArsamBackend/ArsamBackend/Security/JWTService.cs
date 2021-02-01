@@ -20,6 +20,9 @@ using System.Threading.Tasks;
 using ArsamBackend.Migrations;
 using Castle.Core.Internal;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Task = System.Threading.Tasks.Task;
 
 namespace ArsamBackend.Security
 {
@@ -27,10 +30,14 @@ namespace ArsamBackend.Security
     {
 
         private readonly IConfiguration _config;
+        private readonly IDatabase Redis;
+        private readonly ConnectionMultiplexer muxer;
 
         public JWTService(IConfiguration config)
         {
             this._config = config;
+            this.muxer = ConnectionMultiplexer.Connect(config.GetConnectionString(nameof(Redis)));
+            Redis = this.muxer.GetDatabase();
         }
 
         public string GenerateToken(AppUser user)
@@ -41,7 +48,7 @@ namespace ArsamBackend.Security
             var claims = new List<Claim>()
             {
                 new Claim(JwtRegisteredClaimNames.NameId, user.UserName),
-                new Claim( "UserId", user.Id)
+                new Claim("UserId", user.Id)
             };
 
 
@@ -136,7 +143,29 @@ namespace ArsamBackend.Security
             var stringClaimValue = securityToken.Claims.First(claim => claim.Type == claimType).Value;
             return stringClaimValue;
         }
+
         #endregion utilities
+
+        public void BlockToken(string email, string token)
+        {
+            Redis.SetAdd(email, token);
+        }
+
+        public void RemoveExpiredTokens(string email)
+        {
+            var blockedTokens = Redis.SetScan(email).ToList();
+            foreach (string token in blockedTokens)
+            {
+                bool isActive = ValidateToken(token);
+                if (!isActive) Redis.SetRemove(email, token);
+            }
+        }
+
+        public bool IsTokenBlocked(string email, string token)
+        {
+            var isBlocked = Redis.SetScan(email).ToList().Contains(token);
+            return isBlocked;
+        }
 
     }
 

@@ -16,6 +16,7 @@ using System.Text;
 using ArsamBackend.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace Eventus.UnitTest.TestUtilities
 {
@@ -42,6 +43,8 @@ namespace Eventus.UnitTest.TestUtilities
         public Mock<IMinIOService> MockMinio = new Mock<IMinIOService>();
         public Mock<IEmailService> MockEmailService = new Mock<IEmailService>();
         public Mock<IWebHostEnvironment> MockWebHostEnvironment = new Mock<IWebHostEnvironment>();
+        public Mock<IDistributedCache> MockIDistributedCache = new Mock<IDistributedCache>();
+        public Mock<IConfiguration> Mockconfiguration = new Mock<IConfiguration>(); 
 
         #endregion mock
     }

@@ -60,5 +60,6 @@ namespace ArsamBackend.Security
         {
             app.UseMiddleware<CheckIsUserPremiumMiddleWare>();
         }
+
     }
 }

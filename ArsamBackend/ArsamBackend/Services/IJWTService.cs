@@ -14,5 +14,8 @@ namespace ArsamBackend.Services
         public string GetClaim(string token, string claimType);
         public Task<AppUser> FindUserByTokenAsync(string authorization, AppDbContext context);
         public Task<Role?> FindRoleByTokenAsync(string authorization, int eventId, AppDbContext context);
+        public void BlockToken(string email, string token);
+        public void RemoveExpiredTokens(string email);
+        public bool IsTokenBlocked(string email, string token);
     }
 }
