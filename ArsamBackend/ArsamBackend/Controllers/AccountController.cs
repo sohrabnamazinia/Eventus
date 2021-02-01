@@ -297,8 +297,9 @@ namespace ArsamBackend.Controllers
                 _context.SaveChanges();
             }
             _logger.Log(LogLevel.Warning, user.Roles.Count.ToString());
-            var AdminInEvents = user.Roles.Where(x => x.Role == Role.Admin).Select(x => new OutputAbstractViewModel(x.Event)).ToList();
-            foreach (var ee in AdminInEvents)
+            var AdminInEvents = user.Roles.Where(x => x.Role == Role.Admin).ToList();
+            var outp = AdminInEvents.Select(x => new OutputAbstractViewModel(x.Event)).ToList();
+            foreach (var ee in outp)
             {
                 _logger.Log(LogLevel.Critical, ee.Name.ToString());
             }
