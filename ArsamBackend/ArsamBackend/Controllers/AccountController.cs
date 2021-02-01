@@ -298,8 +298,10 @@ namespace ArsamBackend.Controllers
             }
             _logger.Log(LogLevel.Warning, user.Roles.Count.ToString());
             var AdminInEvents = user.Roles.Where(x => x.Role == Role.Admin).ToList();
-            _logger.Log(LogLevel.Critical, AdminInEvents.ToString());
-
+            foreach (var ee in AdminInEvents)
+            {
+                _logger.Log(LogLevel.Critical, AdminInEvents[0].EventId.ToString());
+            }
             var result = new GetProfileViewModel(user);
             result.IsMe = requestedUser == user;
             //result.EncryptedEmail = protector.Protect(user.Email);
