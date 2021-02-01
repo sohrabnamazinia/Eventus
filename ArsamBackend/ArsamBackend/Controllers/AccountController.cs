@@ -300,7 +300,7 @@ namespace ArsamBackend.Controllers
             var AdminInEvents = user.Roles.Where(x => x.Role == Role.Admin).ToList();
             foreach (var ee in AdminInEvents)
             {
-                _logger.Log(LogLevel.Critical, AdminInEvents[0].EventId.ToString());
+                _logger.Log(LogLevel.Critical, ee.EventId.ToString());
             }
             var result = new GetProfileViewModel(user);
             result.IsMe = requestedUser == user;
