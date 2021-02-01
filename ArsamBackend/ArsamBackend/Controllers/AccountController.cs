@@ -296,6 +296,7 @@ namespace ArsamBackend.Controllers
                 user.ImageLink = minIOService.GenerateUrl(user.Id, user.ImageName).Result;
                 _context.SaveChanges();
             }
+            _logger.Log(LogLevel.Warning, user.Roles.Count.ToString());
 
             var result = new GetProfileViewModel(user);
             result.IsMe = requestedUser == user;
