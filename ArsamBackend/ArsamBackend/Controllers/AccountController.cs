@@ -297,10 +297,10 @@ namespace ArsamBackend.Controllers
                 _context.SaveChanges();
             }
             _logger.Log(LogLevel.Warning, user.Roles.Count.ToString());
-            var AdminInEvents = user.Roles.Where(x => x.Role == Role.Admin).ToList();
+            var AdminInEvents = user.Roles.Where(x => x.Role == Role.Admin).Select(x => new OutputAbstractViewModel(x.Event)).ToList();
             foreach (var ee in AdminInEvents)
             {
-                _logger.Log(LogLevel.Critical, ee.EventId.ToString());
+                _logger.Log(LogLevel.Critical, ee.Name.ToString());
             }
             var result = new GetProfileViewModel(user);
             result.IsMe = requestedUser == user;
