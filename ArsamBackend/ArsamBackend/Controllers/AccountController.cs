@@ -22,11 +22,14 @@ using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
+using StackExchange.Redis;
 
 namespace ArsamBackend.Controllers
 {
@@ -40,12 +43,15 @@ namespace ArsamBackend.Controllers
         private readonly ILogger<AccountController> _logger;
         public readonly JwtSecurityTokenHandler handler;
         private readonly IDataProtector protector;
+        private readonly ConnectionMultiplexer muxer;
         private readonly IJWTService _jWTHandler;
         private readonly IMinIOService minIOService;
         private readonly IEmailService emailService;
         private readonly IWebHostEnvironment env;
+        private readonly IConfiguration config;
+        private readonly IDatabase Redis;
 
-        public AccountController(AppDbContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler, IMinIOService minIO, IEmailService emailService, IWebHostEnvironment env)
+        public AccountController(AppDbContext context, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ILogger<AccountController> logger, IDataProtectionProvider dataProtectionProvider, DataProtectionPurposeStrings dataProtectionPurposeStrings, IJWTService jWTHandler, IMinIOService minIO, IEmailService emailService, IWebHostEnvironment env, IConfiguration config)
         {
             this._context = context;
             this.userManager = userManager;
@@ -56,7 +62,10 @@ namespace ArsamBackend.Controllers
             this.minIOService = minIO;
             this.emailService = emailService;
             this.env = env;
+            this.config = config;
             protector = dataProtectionProvider.CreateProtector(DataProtectionPurposeStrings.UserEmailQueryString);
+            this.muxer = ConnectionMultiplexer.Connect(config.GetConnectionString("Redis"));
+            Redis = this.muxer.GetDatabase();
 
         }
 
@@ -159,6 +168,7 @@ namespace ArsamBackend.Controllers
 
                 if (result.Succeeded)
                 {
+                    _jWTHandler.RemoveExpiredTokens(user.Email);
                     return Ok(new { Token , user.Id});
                 }
 
@@ -225,7 +235,11 @@ namespace ArsamBackend.Controllers
         [Authorize]
         public async Task<IActionResult> Logout()
         {
+            string BearerToken = Request.Headers[HeaderNames.Authorization];
+            string token = _jWTHandler.GetRawJTW(BearerToken);
+            AppUser user = await _jWTHandler.FindUserByTokenAsync(BearerToken, _context);
             await signInManager.SignOutAsync();
+            _jWTHandler.BlockToken(user.Email, token);
             return Ok();
         }
 

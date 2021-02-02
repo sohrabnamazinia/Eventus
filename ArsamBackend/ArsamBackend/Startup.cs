@@ -101,6 +101,7 @@ namespace ArsamBackend
             services.AddScoped<IMinIOService, MinIOService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<NotBlocked>();
+            services.AddTransient<TokenManagerMiddleware>();
 
             #endregion Services
             #region Db
@@ -113,6 +114,13 @@ namespace ArsamBackend
             services.AddDbContextPool<AppDbContext>(
             options => options.UseSqlServer(_config.GetConnectionString(Constants.ConnectionStringKey)).UseLazyLoadingProxies());
             services.AddSingleton<DataProtectionPurposeStrings>();
+
+            
+            services.AddDistributedRedisCache(options => 
+            {
+                options.Configuration = _config.GetConnectionString("Redis");
+                options.InstanceName = "master";
+            });
             #endregion Db
         }
 
@@ -139,6 +147,8 @@ namespace ArsamBackend
             app.UseAuthentication();
 
             app.UseAuthorization();
+
+            app.UseMiddleware<TokenManagerMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
