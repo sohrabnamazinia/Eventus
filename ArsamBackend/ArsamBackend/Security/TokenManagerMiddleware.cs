@@ -20,7 +20,7 @@ namespace ArsamBackend.Security
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
             var token = context.Request.Headers[HeaderNames.Authorization];
-            if (token.ToString() == null)
+            if (token.Count == 0)
             {
                 await next(context);
                 return;
