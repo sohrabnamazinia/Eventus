@@ -20,6 +20,12 @@ namespace ArsamBackend.Security
         public async Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
             var token = context.Request.Headers[HeaderNames.Authorization];
+            if (token.ToString() == null)
+            {
+                await next(context);
+                return;
+            }
+
             var email = JWTService.FindEmailByToken(token);
             token = jWTService.GetRawJTW(token);
             var isBlocked = jWTService.IsTokenBlocked(email, token);
