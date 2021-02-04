@@ -311,6 +311,8 @@ namespace ArsamBackend.Controllers
                 _context.SaveChanges();
             }
 
+
+
             var result = new GetProfileViewModel(user);
             result.IsMe = requestedUser == user;
             //result.EncryptedEmail = protector.Protect(user.Email);
