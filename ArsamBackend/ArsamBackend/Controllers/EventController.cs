@@ -260,16 +260,21 @@ namespace ArsamBackend.Controllers
         [HttpDelete]
         public async Task<ActionResult> Delete(int id)
         {
+            AppUser requestedUser = await jwtHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
 
             Event existEvent = await _context.Events.SingleOrDefaultAsync(x => x.Id == id);
             if (existEvent == null || existEvent.IsDeleted)
                 return NotFound("no event found by this id: " + id);
 
             Role? userRole = await jwtHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], id, _context);
-            if (userRole != Role.Admin)
+            
+            if (userRole != Role.Admin && requestedUser != existEvent.Creator)
                 return StatusCode(403, "access denied, you are not an admin");
 
+            _context.EventUserRole.Where(x => x.Event == existEvent).Select(x => x.IsDeleted == true);
             existEvent.IsDeleted = true;
+            
+
             await _context.SaveChangesAsync();
             return Ok("event deleted");
         }
