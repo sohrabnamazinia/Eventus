@@ -30,7 +30,7 @@ namespace ArsamBackend.Utilities
         public static readonly byte[] tiff2 = new byte[] { 77, 77, 42 };
         public static readonly byte[] jpeg = new byte[] { 255, 216, 255, 224 };
         public static readonly byte[] jpeg2 = new byte[] { 255, 216, 255, 225 };
-        public static readonly string jpg;
+        public static readonly byte[] jpg = new byte[] { 255, 216, 255, 219 };
         public static readonly string jfif;
         public static readonly string tif;
         public static readonly string ConfirmAccountRegisterationViewPath = Path.DirectorySeparatorChar.ToString() + "Templates" + Path.DirectorySeparatorChar.ToString() + "EmailTemplate" + Path.DirectorySeparatorChar.ToString() + "EmailConfirmation.html";
@@ -51,7 +51,7 @@ namespace ArsamBackend.Utilities
             var firstBytes4 = fileBytes.Take(4).ToArray();
             var firstBytes3 = firstBytes4.Take(3).ToArray();
             if (Enumerable.SequenceEqual(firstBytes3, tiff) || Enumerable.SequenceEqual(firstBytes3, tiff2)) return true;
-            else if (Enumerable.SequenceEqual(firstBytes4, png) || Enumerable.SequenceEqual(firstBytes4, jpeg) || Enumerable.SequenceEqual(firstBytes4, jpeg2)) return true;
+            else if (Enumerable.SequenceEqual(firstBytes4, png) || (Enumerable.SequenceEqual(firstBytes4, jpg)) || Enumerable.SequenceEqual(firstBytes4, jpeg) || Enumerable.SequenceEqual(firstBytes4, jpeg2)) return true;
             return false;
         }
 
