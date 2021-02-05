@@ -48,6 +48,7 @@ namespace ArsamBackend.Controllers
             AppUser requestedUser = await _jWTHandler.FindUserByTokenAsync(Request.Headers[HeaderNames.Authorization], _context);
             var ev = _context.Events.Find(model.EventId);
             if (ev == null) return NotFound("Event not found!");
+            if (ev.IsProject) return BadRequest("Event Projects can not have ticket types!");
             if (ev.IsBlocked) return StatusCode(402, "Upgrade To Premium");
             var requestedUserRole = await _jWTHandler.FindRoleByTokenAsync(Request.Headers[HeaderNames.Authorization], ev.Id, _context);
             if (!(requestedUserRole == Role.Admin)) return StatusCode(403, "Access Denied");
