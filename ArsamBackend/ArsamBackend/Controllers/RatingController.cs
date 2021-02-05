@@ -63,8 +63,6 @@ namespace ArsamBackend.Controllers
                     return BadRequest("project events can not be rated!");
                 case -2:
                     return BadRequest("event has not still finished!");
-                case -1:
-                    return BadRequest("only event members can rate the event!");
             };
 
             var temp = ev.Ratings.Where(x => x.User == user).FirstOrDefault();
@@ -93,7 +91,6 @@ namespace ArsamBackend.Controllers
         {
             if (ev.IsProject) return -3;
             if (DateTime.Now < ev.EndDate) return -2;
-            if (!ev.EventMembers.Contains(user)) return -1;
             return 0;
         }
 
