@@ -193,7 +193,9 @@ namespace ArsamBackend.Controllers
                     var NewUser = new AppUser()
                     {
                         Email = Email,
-                        UserName = Email
+                        UserName = Email,
+                        FirstName = "New",
+                        LastName = "User"
                     };
                     var result = await userManager.CreateAsync(NewUser);
 
