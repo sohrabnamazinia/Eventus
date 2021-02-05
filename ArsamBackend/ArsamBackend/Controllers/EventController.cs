@@ -271,7 +271,6 @@ namespace ArsamBackend.Controllers
             if (userRole != Role.Admin && requestedUser != existEvent.Creator)
                 return StatusCode(403, "access denied, you are not an admin");
 
-            _context.EventUserRole.Where(x => x.Event == existEvent).Select(x => x.IsDeleted == true);
             existEvent.IsDeleted = true;
             
 
