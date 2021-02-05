@@ -276,6 +276,12 @@ namespace ArsamBackend.Controllers
                     role.IsDeleted = true;
             }
 
+            _context.Tickets.RemoveRange(existEvent.Tickets);
+            _context.TicketTypes.RemoveRange(existEvent.TicketTypes);
+            _context.Comments.RemoveRange(existEvent.Comments);
+            _context.Tasks.RemoveRange(existEvent.Tasks);
+            _context.Ratings.RemoveRange(existEvent.Ratings);
+
             existEvent.IsDeleted = true;
             
 
