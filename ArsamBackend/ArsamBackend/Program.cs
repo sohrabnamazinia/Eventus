@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
 
 namespace ArsamBackend
 {
@@ -17,10 +18,20 @@ namespace ArsamBackend
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
+        #region Override ConfigureLogging
+            Host.CreateDefaultBuilder(args).ConfigureLogging((hostingContext, logging) => 
+            {
+                logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                logging.AddConsole();
+                logging.AddDebug();
+                logging.AddEventSourceLogger();
+                // NLog as a third Party logging provider. check "c:\DemoLogs" for logged info.
+                logging.AddNLog();
+            })
+        #endregion Override ConfigureLogging
+            .ConfigureWebHostDefaults(webBuilder =>
+            {
                     webBuilder.UseStartup<Startup>();
-                });
+            });
     }
 }
