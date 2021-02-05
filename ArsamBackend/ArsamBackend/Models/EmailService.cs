@@ -83,7 +83,7 @@ namespace ArsamBackend.Models
                 bodyBuilder.HtmlBody = SourceReader.ReadToEnd();
             }
 
-            bodyBuilder.HtmlBody = string.Format(bodyBuilder.HtmlBody, model.FirstName, model.ConfirmationLink, model.Email, model.Username, model.Password);
+            bodyBuilder.HtmlBody = string.Format(bodyBuilder.HtmlBody, model.FirstName, model.ConfirmationLink, model.Email, model.Username);
             SendEmail(message, bodyBuilder);
         }
 
@@ -103,7 +103,7 @@ namespace ArsamBackend.Models
                 bodyBuilder.HtmlBody = SourceReader.ReadToEnd();
             }
 
-            bodyBuilder.HtmlBody = string.Format(bodyBuilder.HtmlBody, model.FirstName, model.TicketTypeName, model.EventName, model.price, model.balance);
+            bodyBuilder.HtmlBody = string.Format(bodyBuilder.HtmlBody, model.FirstName, model.TicketTypeName, model.EventName, model.price);
             SendEmail(message, bodyBuilder);
         }
     }

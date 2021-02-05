@@ -37,7 +37,7 @@ namespace ArsamBackend.Utilities
         public static readonly string BuyTicketResult = Path.DirectorySeparatorChar.ToString() + "Templates" + Path.DirectorySeparatorChar.ToString() + "EmailTemplate" + Path.DirectorySeparatorChar.ToString() + "BuyTicketResult.html";
         public static readonly string SMTPGoogleDomain = "smtp.gmail.com";
         public static readonly int SMTPPort = 587;
-        public static readonly string ProjectEmail = "eventus.arsam@gmail.com";
+        public static readonly string ProjectEmail = "arsam.eventus@gmail.com";
         public static readonly string ProjectSender = "Eventus Team";
         public static readonly string ProjectReciever = "User";
         public static readonly string EmailConfirmationSubject = "Confirm your Email";
